@@ -62,7 +62,15 @@ impl fmt::Display for Error {
                 message,
             } => write!(f, "E [{line}][{column}] {message}"),
             Self::WithSource { source, error } => match error.location() {
-                Some((line, column)) => write!(f, "{} [{}][{}][{}] {}", error.prefix(), source, line, column, error.message()),
+                Some((line, column)) => write!(
+                    f,
+                    "{} [{}][{}][{}] {}",
+                    error.prefix(),
+                    source,
+                    line,
+                    column,
+                    error.message()
+                ),
                 None => write!(f, "{error}"),
             },
             Self::StageNotImplemented(stage) => {
