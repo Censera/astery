@@ -1,3 +1,4 @@
+mod cast_pointer;
 mod compiler;
 mod context;
 mod error;
@@ -9,6 +10,7 @@ mod parser;
 pub mod shortcuts;
 mod user_type;
 
+pub use cast_pointer::{AddressOfExpression, CastExpression, PointerType};
 pub use compiler::{Compiler, Source};
 pub use context::Context;
 pub use error::{Error, Stage};
@@ -263,8 +265,7 @@ mod tests {
         let declarations = compiler
             .parse_bindings(&Source::new(
                 "main.as",
-                "let { name string = value, other i32 = 42 };",
-            ))
+                "let { name string = value, other i32 = 42 };")
             .unwrap();
         assert_eq!(declarations.len(), 1);
         assert_eq!(declarations[0].kind, BindingKind::Let);
