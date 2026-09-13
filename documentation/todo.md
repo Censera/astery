@@ -38,7 +38,7 @@
 - [x] Parse enums and enum variants.
 - [x] Parse structs and fields.
 - [x] Parse `into` implementations.
-- [ ] Parse user-defined types.
+- [x] Parse user-defined types.
 - [ ] Parse casts and pointers.
 - [ ] Parse embedded C blocks.
 - [ ] Parse macros and macro calls.
