@@ -5,6 +5,7 @@ use crate::parser::{
     ModuleDeclaration, StructDeclaration, parse_bindings, parse_enums, parse_functions,
     parse_imports, parse_intos, parse_module, parse_structs,
 };
+use crate::user_type::{UserTypeDeclaration, parse_user_types};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Source {
@@ -64,6 +65,11 @@ impl Compiler {
     pub fn parse_intos(&self, source: &Source) -> Result<Vec<IntoImplementation>, Error> {
         let tokens = self.tokenize(source)?;
         parse_intos(&tokens)
+    }
+
+    pub fn parse_user_types(&self, source: &Source) -> Result<Vec<UserTypeDeclaration>, Error> {
+        let tokens = self.tokenize(source)?;
+        parse_user_types(&tokens)
     }
 
     pub fn parse_bindings(&self, source: &Source) -> Result<Vec<BindingDeclaration>, Error> {
