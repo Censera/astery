@@ -14,7 +14,10 @@ pub struct MacroCall {
 }
 
 pub fn parse_macros(tokens: &[Token]) -> Result<Vec<MacroDeclaration>, Error> {
-    let mut parser = Parser { tokens, position: 0 };
+    let mut parser = Parser {
+        tokens,
+        position: 0,
+    };
     let mut macros = Vec::new();
     while parser.peek() == Some(&TokenKind::Macro) {
         macros.push(parser.parse_macro()?);
@@ -24,7 +27,10 @@ pub fn parse_macros(tokens: &[Token]) -> Result<Vec<MacroDeclaration>, Error> {
 }
 
 pub fn parse_macro_call(tokens: &[Token]) -> Result<MacroCall, Error> {
-    let mut parser = Parser { tokens, position: 0 };
+    let mut parser = Parser {
+        tokens,
+        position: 0,
+    };
     let name = match parser.advance() {
         Some(TokenKind::Identifier(name)) => name,
         _ => return Err(parser.error("expected macro name")),
@@ -109,15 +115,11 @@ impl<'a> Parser<'a> {
         let start = self.position;
         let mut depth = 0usize;
         while let Some(kind) = self.peek() {
-            if depth == 0
-                && matches!(kind, TokenKind::Comma | TokenKind::CloseParen)
-            {
+            if depth == 0 && matches!(kind, TokenKind::Comma | TokenKind::CloseParen) {
                 break;
             }
             match kind {
-                TokenKind::OpenParen | TokenKind::OpenBracket | TokenKind::OpenBrace => {
-                    depth += 1
-                }
+                TokenKind::OpenParen | TokenKind::OpenBracket | TokenKind::OpenBrace => depth += 1,
                 TokenKind::CloseParen | TokenKind::CloseBracket | TokenKind::CloseBrace => {
                     if depth == 0 {
                         return Err(self.error("unexpected closing delimiter in macro argument"));
@@ -218,10 +220,7 @@ mod tests {
 
     #[test]
     fn parses_macros() {
-        let tokens = tokenize(
-            "macro this() { \"this\" } macro square(x) { x * x }",
-        )
-        .unwrap();
+        let tokens = tokenize("macro this() { \"this\" } macro square(x) { x * x }").unwrap();
         assert_eq!(
             parse_macros(&tokens).unwrap(),
             vec![
@@ -305,10 +304,7 @@ mod tests {
     #[test]
     fn rejects_empty_macro_argument() {
         let tokens = tokenize("square!()").unwrap();
-        assert!(parse_macro_call(&tokens)
-            .unwrap()
-            .arguments
-            .is_empty());
+        assert!(parse_macro_call(&tokens).unwrap().arguments.is_empty());
     }
 
     #[test]
