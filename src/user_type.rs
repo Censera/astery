@@ -75,9 +75,8 @@ impl<'a> Parser<'a> {
                 _ => None,
             };
             let name = self.expect_identifier("expected user-defined struct field name")?;
-            let type_tokens = self.collect_until(|kind| {
-                matches!(kind, TokenKind::Comma | TokenKind::CloseBrace)
-            });
+            let type_tokens =
+                self.collect_until(|kind| matches!(kind, TokenKind::Comma | TokenKind::CloseBrace));
             if type_tokens.is_empty() {
                 return Err(self.error("expected user-defined struct field type"));
             }
@@ -225,15 +224,21 @@ mod tests {
     fn rejects_missing_definition() {
         let tokens = tokenize("type Point").unwrap();
         let error = parse_user_types(&tokens).unwrap_err();
-        assert!(error.to_string().contains("expected user-defined type definition"));
+        assert!(
+            error
+                .to_string()
+                .contains("expected user-defined type definition")
+        );
     }
 
     #[test]
     fn rejects_missing_struct_field_type() {
         let tokens = tokenize("type Node struct { value }").unwrap();
         let error = parse_user_types(&tokens).unwrap_err();
-        assert!(error
-            .to_string()
-            .contains("expected user-defined struct field type"));
+        assert!(
+            error
+                .to_string()
+                .contains("expected user-defined struct field type")
+        );
     }
 }

@@ -6,8 +6,8 @@ mod handler;
 mod lexer;
 mod module;
 mod parser;
-mod user_type;
 pub mod shortcuts;
+mod user_type;
 
 pub use compiler::{Compiler, Source};
 pub use context::Context;
