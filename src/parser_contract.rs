@@ -49,10 +49,8 @@ pub fn normalize_function_return_types(source: &str) -> Result<String, Error> {
 fn find_function_name(tokens: &[Token], start: usize) -> Option<usize> {
     let mut index = start;
     while index + 1 < tokens.len() {
-        if matches!(
-            tokens[index].kind(),
-            TokenKind::Identifier(_)
-        ) && tokens[index + 1].kind() == &TokenKind::OpenParen
+        if matches!(tokens[index].kind(), TokenKind::Identifier(_))
+            && tokens[index + 1].kind() == &TokenKind::OpenParen
         {
             return Some(index);
         }

@@ -131,16 +131,14 @@ impl Compiler {
     pub fn validate_type(&self, source: &Source) -> Result<(), Error> {
         let tokens = self.tokenize(source)?;
         let kinds = tokens.iter().map(Token::kind).cloned().collect::<Vec<_>>();
-        type_syntax::parse(&kinds)
-            .map(|_| ())
-            .map_err(|message| {
-                Error::Parse {
-                    line: 1,
-                    column: 1,
-                    message,
-                }
-                .with_source(source.name())
-            })
+        type_syntax::parse(&kinds).map(|_| ()).map_err(|message| {
+            Error::Parse {
+                line: 1,
+                column: 1,
+                message,
+            }
+            .with_source(source.name())
+        })
     }
 
     pub fn compile(&self, source: Source) -> Result<(), Error> {

@@ -6,8 +6,13 @@ pub enum TypeSyntax {
     Bool,
     Char,
     String,
-    Integer { signed: bool, bits: u16 },
-    Float { bits: u16 },
+    Integer {
+        signed: bool,
+        bits: u16,
+    },
+    Float {
+        bits: u16,
+    },
     User(String),
     Pointer {
         optional: bool,
@@ -29,7 +34,10 @@ pub fn parse(tokens: &[TokenKind]) -> Result<TypeSyntax, String> {
     if tokens.is_empty() {
         return Ok(TypeSyntax::Void);
     }
-    let mut parser = Parser { tokens, position: 0 };
+    let mut parser = Parser {
+        tokens,
+        position: 0,
+    };
     let ty = parser.parse_type()?;
     if parser.position != tokens.len() {
         return Err("unexpected token after type".into());
