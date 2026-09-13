@@ -1292,7 +1292,7 @@ fn keyword_name(kind: &TokenKind) -> Option<String> {
 #[cfg(test)]
 mod tests {
     use super::{
-        BinaryOperator, EnumVariantKind, Expression, IntoImplementation, Statement,
+        BinaryOperator, EnumVariantKind, Expression, IntoImplementation, MethodDeclaration, Statement,
         StructDeclaration, StructField, Visibility, parse_enums, parse_functions, parse_intos,
         parse_structs,
     };
@@ -1350,10 +1350,29 @@ mod tests {
         assert_eq!(structs.len(), 2);
         assert_eq!(structs[0].visibility, Some(Visibility::Public));
         assert_eq!(structs[0].name, "Point");
-        assert_eq!(structs[0].fields.len(), 2);
-        assert_eq!(structs[0].fields[0].visibility, Some(Visibility::Public));
-        assert_eq!(structs[0].fields[1].visibility, Some(Visibility::Private));
-        assert_eq!(structs[1].name, "Empty");
+        assert_eq!(
+            structs[0].fields,
+            vec![
+                StructField {
+                    visibility: Some(Visibility::Public),
+                    name: "x".into(),
+                    type_tokens: vec![TokenKind::Identifier("f64".into())],
+                },
+                StructField {
+                    visibility: Some(Visibility::Private),
+                    name: "y".into(),
+                    type_tokens: vec![TokenKind::Identifier("f64".into())],
+                },
+            ]
+        );
+        assert_eq!(
+            structs[1],
+            StructDeclaration {
+                visibility: Some(Visibility::Private),
+                name: "Empty".into(),
+                fields: Vec::new(),
+            }
+        );
     }
 
     #[test]
@@ -1365,27 +1384,22 @@ mod tests {
 
     #[test]
     fn parses_into_implementations() {
-        let tokens =
-            tokenize("into Point { pub fn [i32] x() {} pri fn y(value i64) {} } into Empty {}")
-                .unwrap();
+        let tokens = tokenize(
+            "into Point { pub fn [i32] x() {} pri fn y(value i64) {} } into Empty {}",
+        )
+        .unwrap();
         let implementations = parse_intos(&tokens).unwrap();
         assert_eq!(implementations.len(), 2);
         assert_eq!(implementations[0].target, "Point");
         assert_eq!(implementations[0].methods.len(), 2);
-        assert_eq!(
-            implementations[0].methods[0].visibility,
-            Some(Visibility::Public)
-        );
+        assert_eq!(implementations[0].methods[0].visibility, Some(Visibility::Public));
         assert_eq!(implementations[0].methods[0].name, "x");
         assert_eq!(
             implementations[0].methods[0].return_type,
             vec![TokenKind::Identifier("i32".into())]
         );
         assert!(implementations[0].methods[0].parameters.is_empty());
-        assert_eq!(
-            implementations[0].methods[1].visibility,
-            Some(Visibility::Private)
-        );
+        assert_eq!(implementations[0].methods[1].visibility, Some(Visibility::Private));
         assert_eq!(implementations[0].methods[1].name, "y");
         assert_eq!(
             implementations[0].methods[1].parameters,
