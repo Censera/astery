@@ -5,6 +5,7 @@ use crate::cast_pointer::{
 use crate::embed::{EmbeddedBlock, parse_embedded_blocks};
 use crate::error::{Error, Stage};
 use crate::lexer::{Token, tokenize};
+use crate::macros::{MacroCall, MacroDeclaration, parse_macro_call, parse_macros};
 use crate::parser::{
     BindingDeclaration, EnumDeclaration, FunctionDeclaration, Import, IntoImplementation,
     ModuleDeclaration, StructDeclaration, parse_bindings, parse_enums, parse_functions,
@@ -94,6 +95,16 @@ impl Compiler {
 
     pub fn parse_embedded_blocks(&self, source: &Source) -> Result<Vec<EmbeddedBlock>, Error> {
         parse_embedded_blocks(source.text()).map_err(|error| error.with_source(source.name()))
+    }
+
+    pub fn parse_macros(&self, source: &Source) -> Result<Vec<MacroDeclaration>, Error> {
+        let tokens = self.tokenize(source)?;
+        parse_macros(&tokens).map_err(|error| error.with_source(source.name()))
+    }
+
+    pub fn parse_macro_call(&self, source: &Source) -> Result<MacroCall, Error> {
+        let tokens = self.tokenize(source)?;
+        parse_macro_call(&tokens).map_err(|error| error.with_source(source.name()))
     }
 
     pub fn parse_bindings(&self, source: &Source) -> Result<Vec<BindingDeclaration>, Error> {
