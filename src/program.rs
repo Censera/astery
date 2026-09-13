@@ -39,6 +39,9 @@ fn parse_item(tokens: &[Token], program: &mut Program) -> Result<(), Error> {
 
     match kind {
         DeclarationKind::Module => {
+            if program.module.is_some() {
+                return Err(error_at(tokens.first(), "multiple module declarations are not allowed"));
+            }
             program.module = Some(parse_module(tokens)?);
         }
         DeclarationKind::Import => {
@@ -51,6 +54,7 @@ fn parse_item(tokens: &[Token], program: &mut Program) -> Result<(), Error> {
             program.structs.extend(parse_structs(tokens)?);
         }
         DeclarationKind::UserType => {
+            let tokens = tokens.strip_suffix(&[TokenKind::Semicolon]).unwrap_or(tokens);
             program.user_types.extend(parse_user_types(tokens)?);
         }
         DeclarationKind::Into => {
