@@ -49,7 +49,7 @@ impl<'a> Parser<'a> {
             UserTypeDefinition::Alias(self.parse_alias_tokens())
         };
 
-        if matches!(definition, UserTypeDefinition::Alias(ref tokens) if tokens.is_empty()) {
+        if matches!(&definition, UserTypeDefinition::Alias(tokens) if tokens.is_empty()) {
             return Err(self.error("expected user-defined type definition"));
         }
 
