@@ -12,7 +12,6 @@
 - [x] Tokenize module declarations, identifiers, and keywords.
 - [x] Tokenize primitive literals.
 - [x] Tokenize strings and characters.
-- [x] Tokenize strings and characters.
 - [x] Tokenize operators and punctuation.
 - [x] Tokenize visibility and function flags.
 - [x] Tokenize pointer and cast syntax.
