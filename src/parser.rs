@@ -1292,8 +1292,9 @@ fn keyword_name(kind: &TokenKind) -> Option<String> {
 #[cfg(test)]
 mod tests {
     use super::{
-        BinaryOperator, EnumVariantKind, Expression, IntoImplementation, Statement, StructDeclaration,
-        StructField, Visibility, parse_enums, parse_functions, parse_intos, parse_structs,
+        BinaryOperator, EnumVariantKind, Expression, IntoImplementation, Statement,
+        StructDeclaration, StructField, Visibility, parse_enums, parse_functions, parse_intos,
+        parse_structs,
     };
     use crate::{TokenKind, lexer::tokenize};
 
@@ -1364,22 +1365,27 @@ mod tests {
 
     #[test]
     fn parses_into_implementations() {
-        let tokens = tokenize(
-            "into Point { pub fn [i32] x() {} pri fn y(value i64) {} } into Empty {}",
-        )
-        .unwrap();
+        let tokens =
+            tokenize("into Point { pub fn [i32] x() {} pri fn y(value i64) {} } into Empty {}")
+                .unwrap();
         let implementations = parse_intos(&tokens).unwrap();
         assert_eq!(implementations.len(), 2);
         assert_eq!(implementations[0].target, "Point");
         assert_eq!(implementations[0].methods.len(), 2);
-        assert_eq!(implementations[0].methods[0].visibility, Some(Visibility::Public));
+        assert_eq!(
+            implementations[0].methods[0].visibility,
+            Some(Visibility::Public)
+        );
         assert_eq!(implementations[0].methods[0].name, "x");
         assert_eq!(
             implementations[0].methods[0].return_type,
             vec![TokenKind::Identifier("i32".into())]
         );
         assert!(implementations[0].methods[0].parameters.is_empty());
-        assert_eq!(implementations[0].methods[1].visibility, Some(Visibility::Private));
+        assert_eq!(
+            implementations[0].methods[1].visibility,
+            Some(Visibility::Private)
+        );
         assert_eq!(implementations[0].methods[1].name, "y");
         assert_eq!(
             implementations[0].methods[1].parameters,
