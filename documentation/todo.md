@@ -40,7 +40,7 @@
 - [x] Parse `into` implementations.
 - [x] Parse user-defined types.
 - [x] Parse casts and pointers.
-- [ ] Parse embedded C blocks.
+- [x] Parse embedded C blocks.
 - [ ] Parse macros and macro calls.
 
 ## Semantic analysis
@@ -78,30 +78,3 @@
 - [ ] Lower pointers, allocation, loads, and stores.
 - [ ] Lower arrays, vectors, and tuples.
 - [ ] Lower structs and enums.
-- [ ] Lower user-defined types.
-- [ ] Lower embedded C.
-
-## Standard library
-
-- [ ] Implement `print`.
-- [ ] Implement `eprint`.
-- [ ] Implement `read`.
-- [ ] Implement `sizeof`.
-- [ ] Implement `length`.
-- [ ] Implement `format`.
-- [ ] Implement `alloc`.
-- [ ] Implement `free`.
-- [ ] Implement `parse`.
-- [ ] Implement array/vector push, pop, and length operations.
-
-## Native output
-
-- [ ] Add target initialization through `an-inkwell`.
-- [ ] Add target-machine support when required.
-- [ ] Emit native object code or executables.
-
-## Experimental
-
-- [ ] Evaluate macros as a language feature boundary.
-- [ ] Evaluate lambdas.
-- [ ] Evaluate thunks.
