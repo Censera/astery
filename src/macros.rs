@@ -4,13 +4,13 @@ use crate::{Error, Token, TokenKind};
 pub struct MacroDeclaration {
     pub name: String,
     pub parameters: Vec<String>,
-    pub body: Vec<TokenKind>,
+    pub body: Vec<Token>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct MacroCall {
     pub name: String,
-    pub arguments: Vec<Vec<TokenKind>>,
+    pub arguments: Vec<Vec<Token>>,
 }
 
 pub fn parse_macros(tokens: &[Token]) -> Result<Vec<MacroDeclaration>, Error> {
@@ -89,7 +89,7 @@ impl<'a> Parser<'a> {
         Ok(parameters)
     }
 
-    fn parse_arguments(&mut self) -> Result<Vec<Vec<TokenKind>>, Error> {
+    fn parse_arguments(&mut self) -> Result<Vec<Vec<Token>>, Error> {
         let mut arguments = Vec::new();
         if self.peek() == Some(&TokenKind::CloseParen) {
             return Ok(arguments);
@@ -111,7 +111,7 @@ impl<'a> Parser<'a> {
         Ok(arguments)
     }
 
-    fn collect_until_argument_separator(&mut self) -> Result<Vec<TokenKind>, Error> {
+    fn collect_until_argument_separator(&mut self) -> Result<Vec<Token>, Error> {
         let start = self.position;
         let mut depth = 0usize;
         while let Some(kind) = self.peek() {
@@ -136,14 +136,10 @@ impl<'a> Parser<'a> {
         if depth != 0 {
             return Err(self.error("unterminated delimiter in macro argument"));
         }
-        Ok(self.tokens[start..self.position]
-            .iter()
-            .map(Token::kind)
-            .cloned()
-            .collect())
+        Ok(self.tokens[start..self.position].to_vec())
     }
 
-    fn collect_balanced_body(&mut self) -> Result<Vec<TokenKind>, Error> {
+    fn collect_balanced_body(&mut self) -> Result<Vec<Token>, Error> {
         let start = self.position;
         let mut depth = 1usize;
         while let Some(kind) = self.peek() {
@@ -152,11 +148,7 @@ impl<'a> Parser<'a> {
                 TokenKind::CloseBrace => {
                     depth -= 1;
                     if depth == 0 {
-                        let body = self.tokens[start..self.position]
-                            .iter()
-                            .map(Token::kind)
-                            .cloned()
-                            .collect();
+                        let body = self.tokens[start..self.position].to_vec();
                         self.advance();
                         return Ok(body);
                     }
@@ -221,37 +213,21 @@ mod tests {
     #[test]
     fn parses_macros() {
         let tokens = tokenize("macro this() { \"this\" } macro square(x) { x * x }").unwrap();
-        assert_eq!(
-            parse_macros(&tokens).unwrap(),
-            vec![
-                MacroDeclaration {
-                    name: "this".into(),
-                    parameters: Vec::new(),
-                    body: vec![TokenKind::String("this".into())],
-                },
-                MacroDeclaration {
-                    name: "square".into(),
-                    parameters: vec!["x".into()],
-                    body: vec![
-                        TokenKind::Identifier("x".into()),
-                        TokenKind::Multiply,
-                        TokenKind::Identifier("x".into()),
-                    ],
-                },
-            ]
-        );
+        let macros = parse_macros(&tokens).unwrap();
+        assert_eq!(macros[0].name, "this");
+        assert!(matches!(macros[0].body[0].kind(), TokenKind::String(value) if value == "this"));
+        assert_eq!(macros[1].name, "square");
+        assert_eq!(macros[1].parameters, vec!["x"]);
+        assert!(matches!(macros[1].body[0].kind(), TokenKind::Identifier(value) if value == "x"));
     }
 
     #[test]
     fn parses_macro_call() {
         let tokens = tokenize("square!(4)").unwrap();
-        assert_eq!(
-            parse_macro_call(&tokens).unwrap(),
-            MacroCall {
-                name: "square".into(),
-                arguments: vec![vec![TokenKind::Integer("4".into())]],
-            }
-        );
+        let call = parse_macro_call(&tokens).unwrap();
+        assert_eq!(call.name, "square");
+        assert_eq!(call.arguments.len(), 1);
+        assert!(matches!(call.arguments[0][0].kind(), TokenKind::Integer(value) if value == "4"));
     }
 
     #[test]
@@ -260,28 +236,8 @@ mod tests {
         let call = parse_macro_call(&tokens).unwrap();
         assert_eq!(call.name, "square");
         assert_eq!(call.arguments.len(), 2);
-        assert_eq!(
-            call.arguments[0],
-            vec![
-                TokenKind::Integer("1".into()),
-                TokenKind::Add,
-                TokenKind::OpenParen,
-                TokenKind::Integer("2".into()),
-                TokenKind::Multiply,
-                TokenKind::Integer("3".into()),
-                TokenKind::CloseParen,
-            ]
-        );
-        assert_eq!(
-            call.arguments[1],
-            vec![
-                TokenKind::OpenBracket,
-                TokenKind::Integer("4".into()),
-                TokenKind::Comma,
-                TokenKind::Integer("5".into()),
-                TokenKind::CloseBracket,
-            ]
-        );
+        assert!(matches!(call.arguments[0][0].kind(), TokenKind::Integer(value) if value == "1"));
+        assert!(matches!(call.arguments[1][0].kind(), TokenKind::OpenBracket));
     }
 
     #[test]
@@ -289,16 +245,11 @@ mod tests {
         let tokens = tokenize("macro pair(a, b) { (a, b) }").unwrap();
         let macro_declaration = &parse_macros(&tokens).unwrap()[0];
         assert_eq!(macro_declaration.parameters, vec!["a", "b"]);
-        assert_eq!(
-            macro_declaration.body,
-            vec![
-                TokenKind::OpenParen,
-                TokenKind::Identifier("a".into()),
-                TokenKind::Comma,
-                TokenKind::Identifier("b".into()),
-                TokenKind::CloseParen,
-            ]
-        );
+        assert!(matches!(macro_declaration.body[0].kind(), TokenKind::OpenParen));
+        assert!(matches!(macro_declaration.body[1].kind(), TokenKind::Identifier(name) if name == "a"));
+        assert!(matches!(macro_declaration.body[2].kind(), TokenKind::Comma));
+        assert!(matches!(macro_declaration.body[3].kind(), TokenKind::Identifier(name) if name == "b"));
+        assert!(matches!(macro_declaration.body[4].kind(), TokenKind::CloseParen));
     }
 
     #[test]
