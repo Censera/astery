@@ -32,8 +32,8 @@ pub fn normalize_function_return_types(source: &str) -> Result<String, Error> {
             continue;
         }
 
-        let start = offset(&line_starts, tokens[first]);
-        let end = offset(&line_starts, tokens[name_index]);
+        let start = offset(&line_starts, &tokens[first]);
+        let end = offset(&line_starts, &tokens[name_index]);
         insertions.push((start, "["));
         insertions.push((end, "]"));
         index = name_index + 1;
