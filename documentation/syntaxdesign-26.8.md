@@ -172,12 +172,12 @@ let f = e -> i8; // 1
 let g = f -> bool; // true
 
 // pointer
-let name [type] = value;
-let name ^[type] = &value;
+// T is a type placeholder.
+let name ^T = &value;
 
 // None pointer
-let name ?^[type] = &value;
-let name ?^[type] = None;
+let name ?^T = &value;
+let name ?^T = None;
 
 // Function flags for function's settings
 @name
