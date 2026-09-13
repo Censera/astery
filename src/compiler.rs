@@ -1,3 +1,7 @@
+use crate::cast_pointer::{
+    AddressOfExpression, CastExpression, PointerType, parse_address_of, parse_cast,
+    parse_pointer_type,
+};
 use crate::error::{Error, Stage};
 use crate::lexer::{Token, tokenize};
 use crate::parser::{
@@ -70,6 +74,21 @@ impl Compiler {
     pub fn parse_user_types(&self, source: &Source) -> Result<Vec<UserTypeDeclaration>, Error> {
         let tokens = self.tokenize(source)?;
         parse_user_types(&tokens)
+    }
+
+    pub fn parse_cast(&self, source: &Source) -> Result<CastExpression, Error> {
+        let tokens = self.tokenize(source)?;
+        parse_cast(&tokens)
+    }
+
+    pub fn parse_pointer_type(&self, source: &Source) -> Result<PointerType, Error> {
+        let tokens = self.tokenize(source)?;
+        parse_pointer_type(&tokens)
+    }
+
+    pub fn parse_address_of(&self, source: &Source) -> Result<AddressOfExpression, Error> {
+        let tokens = self.tokenize(source)?;
+        parse_address_of(&tokens)
     }
 
     pub fn parse_bindings(&self, source: &Source) -> Result<Vec<BindingDeclaration>, Error> {
