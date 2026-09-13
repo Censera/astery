@@ -36,7 +36,7 @@
 - [x] Parse range and inclusive-range expressions.
 - [x] Parse string chains.
 - [x] Parse arrays, vectors, and tuples.
-- [ ] Parse enums and enum variants.
+- [x] Parse enums and enum variants.
 - [ ] Parse structs and fields.
 - [ ] Parse `into` implementations.
 - [ ] Parse user-defined types.
