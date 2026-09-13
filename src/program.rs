@@ -40,7 +40,7 @@ fn parse_item(tokens: &[Token], program: &mut Program) -> Result<(), Error> {
     match kind {
         DeclarationKind::Module => {
             if program.module.is_some() {
-                return Err(error_at(tokens.first(), "multiple module declarations are not allowed"));
+                return Err(error_at(tokens.first(), "multiple module declarations"));
             }
             program.module = Some(parse_module(tokens)?);
         }
@@ -54,10 +54,6 @@ fn parse_item(tokens: &[Token], program: &mut Program) -> Result<(), Error> {
             program.structs.extend(parse_structs(tokens)?);
         }
         DeclarationKind::UserType => {
-            let tokens = match tokens.last().map(Token::kind) {
-                Some(TokenKind::Semicolon) => &tokens[..tokens.len() - 1],
-                _ => tokens,
-            };
             program.user_types.extend(parse_user_types(tokens)?);
         }
         DeclarationKind::Into => {
@@ -219,11 +215,12 @@ fn scan_until_statement_end(
             {
                 return Ok(current + 1);
             }
-            TokenKind::Use | TokenKind::Let | TokenKind::Const | TokenKind::Type
+            kind
                 if current > start
                     && paren_depth == 0
                     && bracket_depth == 0
-                    && brace_depth == 0 =>
+                    && brace_depth == 0
+                    && is_top_level_declaration_start(kind) =>
             {
                 return Ok(current);
             }
@@ -233,6 +230,25 @@ fn scan_until_statement_end(
     }
 
     Ok(tokens.len())
+}
+
+fn is_top_level_declaration_start(kind: &TokenKind) -> bool {
+    matches!(
+        kind,
+        TokenKind::Mod
+            | TokenKind::Use
+            | TokenKind::Let
+            | TokenKind::Const
+            | TokenKind::Enum
+            | TokenKind::Struct
+            | TokenKind::Type
+            | TokenKind::Into
+            | TokenKind::Fn
+            | TokenKind::Macro
+            | TokenKind::Pub
+            | TokenKind::Pri
+            | TokenKind::At
+    )
 }
 
 fn error_at(token: Option<&Token>, message: &str) -> Error {
