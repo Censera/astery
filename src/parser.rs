@@ -1,5 +1,11 @@
 use crate::{Error, Token, TokenKind};
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Visibility {
+    Public,
+    Private,
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ModuleDeclaration {
     pub name: String,
@@ -15,6 +21,33 @@ pub struct Import {
 pub struct ImportItem {
     pub name: String,
     pub items: Vec<ImportItem>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct EnumDeclaration {
+    pub visibility: Option<Visibility>,
+    pub name: String,
+    pub variants: Vec<EnumVariant>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct EnumVariant {
+    pub visibility: Option<Visibility>,
+    pub name: String,
+    pub kind: EnumVariantKind,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum EnumVariantKind {
+    Unit,
+    Tuple(Vec<Vec<TokenKind>>),
+    Fields(Vec<EnumField>),
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct EnumField {
+    pub name: String,
+    pub type_tokens: Vec<TokenKind>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -196,6 +229,14 @@ pub fn parse_imports(tokens: &[Token]) -> Result<Vec<Import>, Error> {
     .parse_imports()
 }
 
+pub fn parse_enums(tokens: &[Token]) -> Result<Vec<EnumDeclaration>, Error> {
+    Parser {
+        tokens,
+        position: 0,
+    }
+    .parse_enums()
+}
+
 pub fn parse_bindings(tokens: &[Token]) -> Result<Vec<BindingDeclaration>, Error> {
     Parser {
         tokens,
@@ -224,6 +265,128 @@ impl<'a> Parser<'a> {
             imports.push(self.parse_import()?);
         }
         Ok(imports)
+    }
+
+    fn parse_enums(mut self) -> Result<Vec<EnumDeclaration>, Error> {
+        let mut declarations = Vec::new();
+        while matches!(self.peek_kind(), Some(&TokenKind::Pub | &TokenKind::Pri | &TokenKind::Enum)) {
+            declarations.push(self.parse_enum()?);
+        }
+        if self.peek_kind().is_some() {
+            return Err(self.error("unexpected token after enum"));
+        }
+        Ok(declarations)
+    }
+
+    fn parse_enum(&mut self) -> Result<EnumDeclaration, Error> {
+        let visibility = self.parse_visibility();
+        self.expect(TokenKind::Enum)?;
+        let name = self.expect_binding_name()?;
+        self.expect(TokenKind::OpenBrace)?;
+        let mut variants = Vec::new();
+
+        while self.peek_kind() != Some(&TokenKind::CloseBrace) {
+            if self.peek_kind().is_none() {
+                return Err(self.error("unterminated enum"));
+            }
+            variants.push(self.parse_enum_variant()?);
+            if self.peek_kind() == Some(&TokenKind::Comma) {
+                self.advance();
+            } else if self.peek_kind() != Some(&TokenKind::CloseBrace) {
+                return Err(self.error("expected `,` or `}` in enum"));
+            }
+        }
+
+        self.expect(TokenKind::CloseBrace)?;
+        Ok(EnumDeclaration {
+            visibility,
+            name,
+            variants,
+        })
+    }
+
+    fn parse_enum_variant(&mut self) -> Result<EnumVariant, Error> {
+        let visibility = self.parse_visibility();
+        let name = self.expect_binding_name()?;
+        let kind = match self.peek_kind() {
+            Some(TokenKind::OpenParen) => EnumVariantKind::Tuple(self.parse_enum_variant_types()?),
+            Some(TokenKind::OpenBrace) => EnumVariantKind::Fields(self.parse_enum_fields()?),
+            _ => EnumVariantKind::Unit,
+        };
+        Ok(EnumVariant {
+            visibility,
+            name,
+            kind,
+        })
+    }
+
+    fn parse_enum_variant_types(&mut self) -> Result<Vec<Vec<TokenKind>>, Error> {
+        self.expect(TokenKind::OpenParen)?;
+        if self.peek_kind() == Some(&TokenKind::CloseParen) {
+            self.advance();
+            return Ok(Vec::new());
+        }
+
+        let mut types = Vec::new();
+        loop {
+            let type_tokens = self.parse_type_tokens(|kind| {
+                matches!(kind, TokenKind::Comma | TokenKind::CloseParen)
+            });
+            if type_tokens.is_empty() {
+                return Err(self.error("expected enum variant type"));
+            }
+            types.push(type_tokens);
+            if self.peek_kind() == Some(&TokenKind::Comma) {
+                self.advance();
+                continue;
+            }
+            break;
+        }
+        self.expect(TokenKind::CloseParen)?;
+        Ok(types)
+    }
+
+    fn parse_enum_fields(&mut self) -> Result<Vec<EnumField>, Error> {
+        self.expect(TokenKind::OpenBrace)?;
+        if self.peek_kind() == Some(&TokenKind::CloseBrace) {
+            return Err(self.error("enum variant requires at least one field"));
+        }
+
+        let mut fields = Vec::new();
+        while self.peek_kind() != Some(&TokenKind::CloseBrace) {
+            if self.peek_kind().is_none() {
+                return Err(self.error("unterminated enum variant fields"));
+            }
+            let name = self.expect_binding_name()?;
+            let type_tokens = self.parse_type_tokens(|kind| {
+                matches!(kind, TokenKind::Comma | TokenKind::CloseBrace)
+            });
+            if type_tokens.is_empty() {
+                return Err(self.error("expected enum field type"));
+            }
+            fields.push(EnumField { name, type_tokens });
+            if self.peek_kind() == Some(&TokenKind::Comma) {
+                self.advance();
+            } else if self.peek_kind() != Some(&TokenKind::CloseBrace) {
+                return Err(self.error("expected `,` or `}` in enum variant fields"));
+            }
+        }
+        self.expect(TokenKind::CloseBrace)?;
+        Ok(fields)
+    }
+
+    fn parse_visibility(&mut self) -> Option<Visibility> {
+        match self.peek_kind() {
+            Some(TokenKind::Pub) => {
+                self.advance();
+                Some(Visibility::Public)
+            }
+            Some(TokenKind::Pri) => {
+                self.advance();
+                Some(Visibility::Private)
+            }
+            _ => None,
+        }
     }
 
     fn parse_bindings(mut self) -> Result<Vec<BindingDeclaration>, Error> {
@@ -1013,12 +1176,55 @@ fn keyword_name(kind: &TokenKind) -> Option<String> {
 
 #[cfg(test)]
 mod tests {
-    use super::{BinaryOperator, Expression, Statement, parse_functions};
-    use crate::{Source, lexer::tokenize};
+    use super::{
+        BinaryOperator, EnumVariantKind, Expression, Statement, Visibility, parse_enums,
+        parse_functions,
+    };
+    use crate::lexer::tokenize;
 
     fn parse(source: &str) -> Vec<Statement> {
         let tokens = tokenize(source).unwrap();
         parse_functions(&tokens).unwrap().remove(0).body.statements
+    }
+
+    #[test]
+    fn parses_enums_and_variants() {
+        let tokens = tokenize(
+            "pub enum Name { pub first, pri second(i32), third(), fourth { value string, other i64, }, } pri enum Empty {}",
+        )
+        .unwrap();
+        let enums = parse_enums(&tokens).unwrap();
+
+        assert_eq!(enums.len(), 2);
+        assert_eq!(enums[0].visibility, Some(Visibility::Public));
+        assert_eq!(enums[0].name, "Name");
+        assert_eq!(enums[0].variants[0].visibility, Some(Visibility::Public));
+        assert!(matches!(enums[0].variants[0].kind, EnumVariantKind::Unit));
+        assert_eq!(enums[0].variants[1].visibility, Some(Visibility::Private));
+        assert!(matches!(
+            &enums[0].variants[1].kind,
+            EnumVariantKind::Tuple(types) if types == &vec![vec![TokenKind::Identifier("i32".into())]]
+        ));
+        assert!(matches!(
+            &enums[0].variants[2].kind,
+            EnumVariantKind::Tuple(types) if types.is_empty()
+        ));
+        assert!(matches!(
+            &enums[0].variants[3].kind,
+            EnumVariantKind::Fields(fields)
+                if fields.len() == 2
+                    && fields[0].name == "value"
+                    && fields[1].name == "other"
+        ));
+        assert_eq!(enums[1].visibility, Some(Visibility::Private));
+        assert!(enums[1].variants.is_empty());
+    }
+
+    #[test]
+    fn rejects_invalid_enum_variants() {
+        let tokens = tokenize("enum Name { value, invalid(i32, ), } ").unwrap();
+        let error = parse_enums(&tokens).unwrap_err();
+        assert!(error.to_string().contains("expected enum variant type"));
     }
 
     #[test]
