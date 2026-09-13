@@ -54,7 +54,10 @@ fn parse_item(tokens: &[Token], program: &mut Program) -> Result<(), Error> {
             program.structs.extend(parse_structs(tokens)?);
         }
         DeclarationKind::UserType => {
-            let tokens = tokens.strip_suffix(&[TokenKind::Semicolon]).unwrap_or(tokens);
+            let tokens = match tokens.last().map(Token::kind) {
+                Some(TokenKind::Semicolon) => &tokens[..tokens.len() - 1],
+                _ => tokens,
+            };
             program.user_types.extend(parse_user_types(tokens)?);
         }
         DeclarationKind::Into => {
