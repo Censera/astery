@@ -45,66 +45,49 @@ impl Error {
             error: Box::new(self),
         }
     }
+
+    fn diagnostic(&self) -> Option<(&str, usize, usize, &str)> {
+        match self {
+            Self::Lex {
+                line,
+                column,
+                message,
+            } => Some(("E", *line, *column, message)),
+            Self::Parse {
+                line,
+                column,
+                message,
+            } => Some(("E", *line, *column, message)),
+            Self::WithSource { error, .. } => error.diagnostic(),
+            _ => None,
+        }
+    }
 }
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::Io(error) => write!(f, "I/O error: {error}"),
+            Self::WithSource { source, error } => {
+                if let Some((kind, line, column, message)) = error.diagnostic() {
+                    write!(f, "{kind} [{source}][{line}][{column}] {message}")
+                } else {
+                    write!(f, "{error}")
+                }
+            }
             Self::Lex {
                 line,
                 column,
                 message,
-            } => write!(f, "E [{line}][{column}] {message}"),
-            Self::Parse {
+            }
+            | Self::Parse {
                 line,
                 column,
                 message,
             } => write!(f, "E [{line}][{column}] {message}"),
-            Self::WithSource { source, error } => match error.location() {
-                Some((line, column)) => write!(
-                    f,
-                    "{} [{}][{}][{}] {}",
-                    error.prefix(),
-                    source,
-                    line,
-                    column,
-                    error.message()
-                ),
-                None => write!(f, "{error}"),
-            },
             Self::StageNotImplemented(stage) => {
                 write!(f, "compiler stage is not implemented: {stage:?}")
             }
-        }
-    }
-}
-
-impl Error {
-    fn prefix(&self) -> &str {
-        match self {
-            Self::Lex { .. } => "E",
-            Self::Parse { .. } => "E",
-            Self::WithSource { error, .. } => error.prefix(),
-            _ => "E",
-        }
-    }
-
-    fn location(&self) -> Option<(usize, usize)> {
-        match self {
-            Self::Lex { line, column, .. } | Self::Parse { line, column, .. } => {
-                Some((*line, *column))
-            }
-            Self::WithSource { error, .. } => error.location(),
-            _ => None,
-        }
-    }
-
-    fn message(&self) -> &str {
-        match self {
-            Self::Lex { message, .. } | Self::Parse { message, .. } => message,
-            Self::WithSource { error, .. } => error.message(),
-            _ => "",
         }
     }
 }
