@@ -21,6 +21,11 @@ pub enum Error {
         column: usize,
         message: String,
     },
+    Semantic {
+        line: usize,
+        column: usize,
+        message: String,
+    },
     WithSource {
         source: String,
         error: Box<Error>,
@@ -34,6 +39,7 @@ impl Error {
             Self::Io(_) => None,
             Self::Lex { .. } => Some(Stage::Lexer),
             Self::Parse { .. } => Some(Stage::Parser),
+            Self::Semantic { .. } => Some(Stage::Semantic),
             Self::WithSource { error, .. } => error.stage(),
             Self::StageNotImplemented(stage) => Some(*stage),
         }
@@ -54,6 +60,11 @@ impl Error {
                 message,
             } => Some(("E", *line, *column, message)),
             Self::Parse {
+                line,
+                column,
+                message,
+            } => Some(("E", *line, *column, message)),
+            Self::Semantic {
                 line,
                 column,
                 message,
@@ -81,6 +92,11 @@ impl fmt::Display for Error {
                 message,
             }
             | Self::Parse {
+                line,
+                column,
+                message,
+            }
+            | Self::Semantic {
                 line,
                 column,
                 message,

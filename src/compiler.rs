@@ -13,6 +13,13 @@ use crate::parser::{
 use crate::shortcuts::{MacroCall, MacroDeclaration, parse_macro_call, parse_macros};
 use crate::user_type::{UserTypeDeclaration, parse_user_types};
 
+#[path = "parser_contract.rs"]
+mod parser_contract;
+#[path = "type_syntax.rs"]
+mod type_syntax;
+
+pub use type_syntax::TypeSyntax;
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Source {
     name: String,
@@ -69,7 +76,9 @@ impl Compiler {
     }
 
     pub fn parse_intos(&self, source: &Source) -> Result<Vec<IntoImplementation>, Error> {
-        let tokens = self.tokenize(source)?;
+        let normalized = parser_contract::normalize_function_return_types(source.text())
+            .map_err(|error| error.with_source(source.name()))?;
+        let tokens = tokenize(&normalized).map_err(|error| error.with_source(source.name()))?;
         parse_intos(&tokens).map_err(|error| error.with_source(source.name()))
     }
 
@@ -113,8 +122,25 @@ impl Compiler {
     }
 
     pub fn parse_functions(&self, source: &Source) -> Result<Vec<FunctionDeclaration>, Error> {
-        let tokens = self.tokenize(source)?;
+        let normalized = parser_contract::normalize_function_return_types(source.text())
+            .map_err(|error| error.with_source(source.name()))?;
+        let tokens = tokenize(&normalized).map_err(|error| error.with_source(source.name()))?;
         parse_functions(&tokens).map_err(|error| error.with_source(source.name()))
+    }
+
+    pub fn validate_type(&self, source: &Source) -> Result<(), Error> {
+        let tokens = self.tokenize(source)?;
+        let kinds = tokens.iter().map(Token::kind).cloned().collect::<Vec<_>>();
+        type_syntax::parse(&kinds)
+            .map(|_| ())
+            .map_err(|message| {
+                Error::Parse {
+                    line: 1,
+                    column: 1,
+                    message,
+                }
+                .with_source(source.name())
+            })
     }
 
     pub fn compile(&self, source: Source) -> Result<(), Error> {
