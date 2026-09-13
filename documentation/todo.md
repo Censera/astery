@@ -37,7 +37,7 @@
 - [x] Parse arrays, vectors, and tuples.
 - [x] Parse enums and enum variants.
 - [x] Parse structs and fields.
-- [ ] Parse `into` implementations.
+- [x] Parse `into` implementations.
 - [ ] Parse user-defined types.
 - [ ] Parse casts and pointers.
 - [ ] Parse embedded C blocks.
