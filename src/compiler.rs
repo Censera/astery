@@ -16,6 +16,8 @@ use crate::user_type::{UserTypeDeclaration, parse_user_types};
 
 pub use crate::program::Program;
 
+#[path = "macro_expand.rs"]
+mod macro_expand;
 #[path = "parser_contract.rs"]
 mod parser_contract;
 #[path = "type_syntax.rs"]
@@ -65,7 +67,9 @@ impl Compiler {
         let normalized = parser_contract::normalize_function_return_types(source.text())
             .map_err(|error| error.with_source(source.name()))?;
         let tokens = tokenize(&normalized).map_err(|error| error.with_source(source.name()))?;
-        parse_program(&tokens).map_err(|error| error.with_source(source.name()))
+        let expanded = macro_expand::expand_macros(&tokens)
+            .map_err(|error| error.with_source(source.name()))?;
+        parse_program(&expanded).map_err(|error| error.with_source(source.name()))
     }
 
     pub fn parse_imports(&self, source: &Source) -> Result<Vec<Import>, Error> {
