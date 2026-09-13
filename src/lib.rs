@@ -6,6 +6,7 @@ mod handler;
 mod lexer;
 mod module;
 mod parser;
+mod user_type;
 pub mod shortcuts;
 
 pub use compiler::{Compiler, Source};
@@ -22,6 +23,7 @@ pub use parser::{
     MethodDeclaration, ModuleDeclaration, Parameter, Statement, StructDeclaration, StructField,
     UnaryOperator, Visibility, WhileStatement,
 };
+pub use user_type::{UserTypeDeclaration, UserTypeDefinition};
 
 #[cfg(test)]
 mod tests {
