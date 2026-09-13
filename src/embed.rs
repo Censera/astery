@@ -104,7 +104,11 @@ impl<'a> Parser<'a> {
     }
 
     fn expect_keyword(&mut self, expected: &str) -> Result<(), Error> {
-        if self.bytes.get(self.position..self.position + expected.len()) == Some(expected.as_bytes()) {
+        if self
+            .bytes
+            .get(self.position..self.position + expected.len())
+            == Some(expected.as_bytes())
+        {
             let after = self.position + expected.len();
             if after == self.bytes.len() || !is_identifier_continue(self.bytes[after]) {
                 for _ in 0..expected.len() {
@@ -227,10 +231,7 @@ mod tests {
     #[test]
     fn parses_c_block() {
         assert_eq!(
-            parse_embedded_blocks(
-                "embed C {\n    printf(\"Hello\\n\");\n}"
-            )
-            .unwrap(),
+            parse_embedded_blocks("embed C {\n    printf(\"Hello\\n\");\n}").unwrap(),
             vec![EmbeddedBlock {
                 language: "C".into(),
                 body: "\n    printf(\"Hello\\n\");\n".into(),
@@ -248,7 +249,10 @@ if (value) {
 }"#;
         let blocks = parse_embedded_blocks(source).unwrap();
         assert_eq!(blocks[0].language, "C");
-        assert_eq!(blocks[0].body, "\nif (value) {\n    printf(\"}\");\n    /* } */\n}\n");
+        assert_eq!(
+            blocks[0].body,
+            "\nif (value) {\n    printf(\"}\");\n    /* } */\n}\n"
+        );
     }
 
     #[test]
