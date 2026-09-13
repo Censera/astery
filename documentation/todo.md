@@ -50,7 +50,7 @@
 - [x] Establish one semantic type representation for primitive, user-defined, pointer, array, vector, tuple, and union types.
 - [x] Make Semantic a real diagnostic stage instead of only a stage name.
 - [x] Represent casts, address-of, and pointer expressions inside the normal semantic expression model.
-- [ ] Expand macros before semantic analysis while preserving useful source locations.
+- [x] Expand macros before semantic analysis while preserving useful source locations.
 - [x] Build one complete program/module parse unit for semantic analysis.
 - [ ] Attach source spans to semantic inputs so type and name errors use their real source locations.
 
@@ -88,4 +88,3 @@
 - [ ] Lower branches and loops.
 - [ ] Lower pointers, allocation, loads, and stores.
 - [ ] Lower arrays, vectors, and tuples.
-- [ ] Lower structs and enums.
