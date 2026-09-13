@@ -193,6 +193,13 @@ pub enum Expression {
         value: Box<Expression>,
         name: String,
     },
+    Cast {
+        value: Box<Expression>,
+        target_type: Vec<TokenKind>,
+    },
+    AddressOf {
+        value: Box<Expression>,
+    },
     Range {
         start: Box<Expression>,
         end: Box<Expression>,
@@ -874,10 +881,81 @@ impl<'a> Parser<'a> {
                         name,
                     };
                 }
+                Some(TokenKind::Arrow) => {
+                    self.advance();
+                    let target_type = self.parse_cast_target_type()?;
+                    expression = Expression::Cast {
+                        value: Box::new(expression),
+                        target_type,
+                    };
+                }
                 _ => break,
             }
         }
         Ok(expression)
+    }
+
+    fn parse_cast_target_type(&mut self) -> Result<Vec<TokenKind>, Error> {
+        let mut tokens = Vec::new();
+        let mut paren_depth = 0usize;
+        let mut bracket_depth = 0usize;
+        let mut angle_depth = 0usize;
+
+        while let Some(kind) = self.peek_kind() {
+            if paren_depth == 0 && bracket_depth == 0 && angle_depth == 0 && Self::cast_target_terminator(kind) {
+                break;
+            }
+            match kind {
+                TokenKind::OpenParen => paren_depth += 1,
+                TokenKind::CloseParen if paren_depth > 0 => paren_depth -= 1,
+                TokenKind::OpenBracket => bracket_depth += 1,
+                TokenKind::CloseBracket if bracket_depth > 0 => bracket_depth -= 1,
+                TokenKind::Less => angle_depth += 1,
+                TokenKind::Greater if angle_depth > 0 => angle_depth -= 1,
+                _ => {}
+            }
+            tokens.push(self.advance().expect("peeked token must exist"));
+        }
+
+        if tokens.is_empty() {
+            return Err(self.error("expected cast target type"));
+        }
+        if paren_depth != 0 || bracket_depth != 0 || angle_depth != 0 {
+            return Err(self.error("unterminated cast target type"));
+        }
+        Ok(tokens)
+    }
+
+    fn cast_target_terminator(kind: &TokenKind) -> bool {
+        matches!(
+            kind,
+            TokenKind::Arrow
+                | TokenKind::Or
+                | TokenKind::Xor
+                | TokenKind::And
+                | TokenKind::BitOr
+                | TokenKind::BitXor
+                | TokenKind::BitAnd
+                | TokenKind::Equal
+                | TokenKind::NotEqual
+                | TokenKind::Greater
+                | TokenKind::GreaterEqual
+                | TokenKind::Less
+                | TokenKind::LessEqual
+                | TokenKind::ShiftLeft
+                | TokenKind::ShiftRight
+                | TokenKind::Add
+                | TokenKind::Subtract
+                | TokenKind::Multiply
+                | TokenKind::Divide
+                | TokenKind::Range
+                | TokenKind::RangeInclusive
+                | TokenKind::Comma
+                | TokenKind::Semicolon
+                | TokenKind::CloseParen
+                | TokenKind::CloseBracket
+                | TokenKind::CloseBrace
+        )
     }
 
     fn parse_primary_expression(&mut self) -> Result<Expression, Error> {
@@ -890,6 +968,9 @@ impl<'a> Parser<'a> {
             Some(TokenKind::False) => Ok(Expression::Boolean(false)),
             Some(TokenKind::None) => Ok(Expression::None),
             Some(TokenKind::Identifier(name)) => Ok(Expression::Identifier(name)),
+            Some(TokenKind::Ampersand) => Ok(Expression::AddressOf {
+                value: Box::new(self.parse_unary_expression()?),
+            }),
             Some(TokenKind::OpenBracket) => self.parse_array(),
             Some(TokenKind::Less) => self.parse_vector(),
             Some(TokenKind::OpenParen) => self.parse_parenthesized(),
@@ -1533,6 +1614,69 @@ mod tests {
                 Statement::Expression(Expression::Array(Vec::new())),
                 Statement::Expression(Expression::Vector(Vec::new())),
             ]
+        );
+    }
+
+    #[test]
+    fn parses_cast_expression() {
+        assert_eq!(
+            parse("fn main() { value -> i8; }"),
+            vec![Statement::Expression(Expression::Cast {
+                value: Box::new(Expression::Identifier("value".into())),
+                target_type: vec![TokenKind::Identifier("i8".into())],
+            })]
+        );
+    }
+
+    #[test]
+    fn parses_chained_casts() {
+        assert_eq!(
+            parse("fn main() { value -> i8 -> char; }"),
+            vec![Statement::Expression(Expression::Cast {
+                value: Box::new(Expression::Cast {
+                    value: Box::new(Expression::Identifier("value".into())),
+                    target_type: vec![TokenKind::Identifier("i8".into())],
+                }),
+                target_type: vec![TokenKind::Identifier("char".into())],
+            })]
+        );
+    }
+
+    #[test]
+    fn parses_address_of_expression() {
+        assert_eq!(
+            parse("fn main() { &value; }"),
+            vec![Statement::Expression(Expression::AddressOf {
+                value: Box::new(Expression::Identifier("value".into())),
+            })]
+        );
+    }
+
+    #[test]
+    fn parses_address_of_member() {
+        assert_eq!(
+            parse("fn main() { &value.field; }"),
+            vec![Statement::Expression(Expression::AddressOf {
+                value: Box::new(Expression::Member {
+                    value: Box::new(Expression::Identifier("value".into())),
+                    name: "field".into(),
+                }),
+            })]
+        );
+    }
+
+    #[test]
+    fn parses_cast_before_binary_expression() {
+        assert_eq!(
+            parse("fn main() { value -> i8 + 1; }"),
+            vec![Statement::Expression(Expression::Binary {
+                left: Box::new(Expression::Cast {
+                    value: Box::new(Expression::Identifier("value".into())),
+                    target_type: vec![TokenKind::Identifier("i8".into())],
+                }),
+                operator: BinaryOperator::Add,
+                right: Box::new(Expression::Integer("1".into())),
+            })]
         );
     }
 }
