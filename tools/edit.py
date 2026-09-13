@@ -135,14 +135,21 @@ def line_number(text: str, offset: int) -> int:
     return text.count("\n", 0, offset) + 1
 
 
-def context(text: str, start: int, end: int, radius: int) -> str:
+def numbered_chunk(text: str, first: int, last: int) -> str:
+    if first < 1 or last < first:
+        raise EditError("invalid line range")
     lines = text.splitlines(keepends=False)
+    if last > len(lines):
+        raise EditError(f"line range {first}-{last} exceeds file length {len(lines)}")
+    width = len(str(last))
+    return "\n".join(f"{number:>{width}} | {lines[number - 1]}" for number in range(first, last + 1))
+
+
+def context(text: str, start: int, end: int, radius: int) -> str:
     first = line_number(text, start)
     last = line_number(text, max(start, end - 1))
-    lo = max(1, first - radius)
-    hi = min(len(lines), last + radius)
-    width = len(str(hi))
-    return "\n".join(f"{number:>{width}} | {lines[number - 1]}" for number in range(lo, hi + 1))
+    lines = text.splitlines(keepends=False)
+    return numbered_chunk(text, max(1, first - radius), min(len(lines), last + radius))
 
 
 def search(text: str, pattern: str, regex: bool, radius: int) -> str:
@@ -183,10 +190,11 @@ def atomic_write(path: Path, text: str) -> None:
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Search and precisely edit text files using small anchors.")
+    parser = argparse.ArgumentParser(description="Search and precisely edit text files using small chunks and anchors.")
     parser.add_argument("path", type=Path)
     parser.add_argument("--write", action="store_true", help="write changes; otherwise only inspect or print")
     parser.add_argument("--diff", action="store_true", help="print the unified diff")
+    parser.add_argument("--show", nargs=2, metavar=("FIRST", "LAST"), help="print a numbered line chunk")
     parser.add_argument("--search", metavar="TEXT", help="find exact text and print matching line context")
     parser.add_argument("--regex-search", metavar="PATTERN", help="find regex matches and print matching line context")
     parser.add_argument("--context", type=int, default=2, help="context lines for search output (default: 2)")
@@ -232,7 +240,10 @@ def main() -> int:
         return 1
 
     try:
-        if args.search is not None:
+        if args.show is not None:
+            first, last = map(int, args.show)
+            print(numbered_chunk(text, first, last))
+        elif args.search is not None:
             print(search(text, args.search, regex=False, radius=args.context))
         elif args.regex_search is not None:
             print(search(text, args.regex_search, regex=True, radius=args.context))
@@ -249,7 +260,7 @@ def main() -> int:
         output = diff_text(text, result, args.path)
         if output:
             sys.stdout.write(output)
-        elif not args.search and not args.regex_search:
+        elif not args.show and not args.search and not args.regex_search:
             print("no changes")
 
     if args.write and result != text:
@@ -258,7 +269,7 @@ def main() -> int:
         except OSError as exc:
             print(f"error: cannot write {args.path}: {exc}", file=sys.stderr)
             return 1
-    elif not args.search and not args.regex_search and not args.diff and not args.write:
+    elif not args.show and not args.search and not args.regex_search and not args.diff and not args.write:
         sys.stdout.write(result)
 
     return 0
