@@ -22,6 +22,8 @@ mod macro_expand;
 mod parser_contract;
 #[path = "semantic_input.rs"]
 mod semantic_input;
+#[path = "span.rs"]
+mod span;
 #[path = "type_syntax.rs"]
 mod type_syntax;
 
