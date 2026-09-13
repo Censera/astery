@@ -306,8 +306,10 @@ mod tests {
 
     #[test]
     fn rejects_recursive_expansion() {
-        let error = expand_macros(&tokenize("macro loop() { loop!() } loop!()").unwrap())
-            .unwrap_err();
+        let error = expand_macros(
+            &tokenize("macro recurse() { recurse!() } recurse!()").unwrap(),
+        )
+        .unwrap_err();
         assert!(error
             .to_string()
             .contains("macro expansion exceeded the maximum depth"));
