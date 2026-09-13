@@ -18,7 +18,10 @@ pub struct AddressOfExpression {
 }
 
 pub fn parse_cast(tokens: &[Token]) -> Result<CastExpression, Error> {
-    let mut parser = Parser { tokens, position: 0 };
+    let mut parser = Parser {
+        tokens,
+        position: 0,
+    };
     let value = parser.collect_until(TokenKind::Arrow)?;
     parser.expect(TokenKind::Arrow)?;
     let target_type = parser.collect_remaining();
@@ -29,7 +32,10 @@ pub fn parse_cast(tokens: &[Token]) -> Result<CastExpression, Error> {
 }
 
 pub fn parse_pointer_type(tokens: &[Token]) -> Result<PointerType, Error> {
-    let mut parser = Parser { tokens, position: 0 };
+    let mut parser = Parser {
+        tokens,
+        position: 0,
+    };
     let optional = if parser.peek() == Some(&TokenKind::Question) {
         parser.advance();
         true
@@ -48,7 +54,10 @@ pub fn parse_pointer_type(tokens: &[Token]) -> Result<PointerType, Error> {
 }
 
 pub fn parse_address_of(tokens: &[Token]) -> Result<AddressOfExpression, Error> {
-    let mut parser = Parser { tokens, position: 0 };
+    let mut parser = Parser {
+        tokens,
+        position: 0,
+    };
     parser.expect(TokenKind::Ampersand)?;
     let value = parser.collect_remaining();
     if value.is_empty() {
