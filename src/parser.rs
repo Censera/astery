@@ -269,7 +269,10 @@ impl<'a> Parser<'a> {
 
     fn parse_enums(mut self) -> Result<Vec<EnumDeclaration>, Error> {
         let mut declarations = Vec::new();
-        while matches!(self.peek_kind(), Some(&TokenKind::Pub | &TokenKind::Pri | &TokenKind::Enum)) {
+        while matches!(
+            self.peek_kind(),
+            Some(&TokenKind::Pub | &TokenKind::Pri | &TokenKind::Enum)
+        ) {
             declarations.push(self.parse_enum()?);
         }
         if self.peek_kind().is_some() {
@@ -329,9 +332,8 @@ impl<'a> Parser<'a> {
 
         let mut types = Vec::new();
         loop {
-            let type_tokens = self.parse_type_tokens(|kind| {
-                matches!(kind, TokenKind::Comma | TokenKind::CloseParen)
-            });
+            let type_tokens = self
+                .parse_type_tokens(|kind| matches!(kind, TokenKind::Comma | TokenKind::CloseParen));
             if type_tokens.is_empty() {
                 return Err(self.error("expected enum variant type"));
             }
@@ -358,9 +360,8 @@ impl<'a> Parser<'a> {
                 return Err(self.error("unterminated enum variant fields"));
             }
             let name = self.expect_binding_name()?;
-            let type_tokens = self.parse_type_tokens(|kind| {
-                matches!(kind, TokenKind::Comma | TokenKind::CloseBrace)
-            });
+            let type_tokens = self
+                .parse_type_tokens(|kind| matches!(kind, TokenKind::Comma | TokenKind::CloseBrace));
             if type_tokens.is_empty() {
                 return Err(self.error("expected enum field type"));
             }
