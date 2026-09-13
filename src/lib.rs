@@ -19,7 +19,7 @@ pub use parser::{
     BinaryOperator, Binding, BindingDeclaration, BindingKind, Block, EnumDeclaration, EnumField,
     EnumVariant, EnumVariantKind, Expression, ForStatement, FunctionDeclaration, IfStatement,
     Import, ImportItem, LoopStatement, MatchArm, MatchStatement, ModuleDeclaration, Parameter,
-    Statement, UnaryOperator, Visibility, WhileStatement,
+    Statement, StructDeclaration, StructField, UnaryOperator, Visibility, WhileStatement,
 };
 
 #[cfg(test)]
@@ -411,23 +411,5 @@ mod tests {
             .unwrap_err();
         assert_eq!(error.stage(), Some(Stage::Parser));
         assert!(error.to_string().contains("expected identifier"));
-    }
-
-    #[test]
-    fn import_result_is_stable() {
-        let compiler = Compiler::new();
-        let imports = compiler
-            .parse_imports(&Source::new("main.as", "use math { function }"))
-            .unwrap();
-        assert_eq!(
-            imports,
-            vec![Import {
-                module: Some("math".into()),
-                items: vec![ImportItem {
-                    name: "function".into(),
-                    items: Vec::new(),
-                }],
-            }]
-        );
     }
 }

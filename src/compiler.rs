@@ -2,7 +2,8 @@ use crate::error::{Error, Stage};
 use crate::lexer::{Token, tokenize};
 use crate::parser::{
     BindingDeclaration, EnumDeclaration, FunctionDeclaration, Import, ModuleDeclaration,
-    parse_bindings, parse_enums, parse_functions, parse_imports, parse_module,
+    StructDeclaration, parse_bindings, parse_enums, parse_functions, parse_imports, parse_module,
+    parse_structs,
 };
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -53,6 +54,11 @@ impl Compiler {
     pub fn parse_enums(&self, source: &Source) -> Result<Vec<EnumDeclaration>, Error> {
         let tokens = self.tokenize(source)?;
         parse_enums(&tokens)
+    }
+
+    pub fn parse_structs(&self, source: &Source) -> Result<Vec<StructDeclaration>, Error> {
+        let tokens = self.tokenize(source)?;
+        parse_structs(&tokens)
     }
 
     pub fn parse_bindings(&self, source: &Source) -> Result<Vec<BindingDeclaration>, Error> {
