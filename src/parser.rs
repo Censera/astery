@@ -224,7 +224,10 @@ pub enum BinaryOperator {
 }
 
 pub fn parse_module(tokens: &[Token]) -> Result<ModuleDeclaration, Error> {
-    let mut parser = Parser { tokens, position: 0 };
+    let mut parser = Parser {
+        tokens,
+        position: 0,
+    };
     parser.expect(TokenKind::Mod)?;
     Ok(ModuleDeclaration {
         name: parser.expect_name()?,
@@ -232,23 +235,43 @@ pub fn parse_module(tokens: &[Token]) -> Result<ModuleDeclaration, Error> {
 }
 
 pub fn parse_imports(tokens: &[Token]) -> Result<Vec<Import>, Error> {
-    Parser { tokens, position: 0 }.parse_imports()
+    Parser {
+        tokens,
+        position: 0,
+    }
+    .parse_imports()
 }
 
 pub fn parse_enums(tokens: &[Token]) -> Result<Vec<EnumDeclaration>, Error> {
-    Parser { tokens, position: 0 }.parse_enums()
+    Parser {
+        tokens,
+        position: 0,
+    }
+    .parse_enums()
 }
 
 pub fn parse_structs(tokens: &[Token]) -> Result<Vec<StructDeclaration>, Error> {
-    Parser { tokens, position: 0 }.parse_structs()
+    Parser {
+        tokens,
+        position: 0,
+    }
+    .parse_structs()
 }
 
 pub fn parse_bindings(tokens: &[Token]) -> Result<Vec<BindingDeclaration>, Error> {
-    Parser { tokens, position: 0 }.parse_bindings()
+    Parser {
+        tokens,
+        position: 0,
+    }
+    .parse_bindings()
 }
 
 pub fn parse_functions(tokens: &[Token]) -> Result<Vec<FunctionDeclaration>, Error> {
-    Parser { tokens, position: 0 }.parse_functions()
+    Parser {
+        tokens,
+        position: 0,
+    }
+    .parse_functions()
 }
 
 struct Parser<'a> {
@@ -267,7 +290,10 @@ impl<'a> Parser<'a> {
 
     fn parse_enums(mut self) -> Result<Vec<EnumDeclaration>, Error> {
         let mut declarations = Vec::new();
-        while matches!(self.peek_kind(), Some(&TokenKind::Pub | &TokenKind::Pri | &TokenKind::Enum)) {
+        while matches!(
+            self.peek_kind(),
+            Some(&TokenKind::Pub | &TokenKind::Pri | &TokenKind::Enum)
+        ) {
             declarations.push(self.parse_enum()?);
         }
         if self.peek_kind().is_some() {
@@ -278,7 +304,10 @@ impl<'a> Parser<'a> {
 
     fn parse_structs(mut self) -> Result<Vec<StructDeclaration>, Error> {
         let mut declarations = Vec::new();
-        while matches!(self.peek_kind(), Some(&TokenKind::Pub | &TokenKind::Pri | &TokenKind::Struct)) {
+        while matches!(
+            self.peek_kind(),
+            Some(&TokenKind::Pub | &TokenKind::Pri | &TokenKind::Struct)
+        ) {
             declarations.push(self.parse_struct()?);
         }
         if self.peek_kind().is_some() {
@@ -320,7 +349,11 @@ impl<'a> Parser<'a> {
             Some(TokenKind::OpenBrace) => EnumVariantKind::Fields(self.parse_enum_fields()?),
             _ => EnumVariantKind::Unit,
         };
-        Ok(EnumVariant { visibility, name, kind })
+        Ok(EnumVariant {
+            visibility,
+            name,
+            kind,
+        })
     }
 
     fn parse_enum_variant_types(&mut self) -> Result<Vec<Vec<TokenKind>>, Error> {
@@ -331,9 +364,8 @@ impl<'a> Parser<'a> {
         }
         let mut types = Vec::new();
         loop {
-            let type_tokens = self.parse_type_tokens(|kind| {
-                matches!(kind, TokenKind::Comma | TokenKind::CloseParen)
-            });
+            let type_tokens = self
+                .parse_type_tokens(|kind| matches!(kind, TokenKind::Comma | TokenKind::CloseParen));
             if type_tokens.is_empty() {
                 return Err(self.error("expected enum variant type"));
             }
@@ -359,9 +391,8 @@ impl<'a> Parser<'a> {
                 return Err(self.error("unterminated enum variant fields"));
             }
             let name = self.expect_binding_name()?;
-            let type_tokens = self.parse_type_tokens(|kind| {
-                matches!(kind, TokenKind::Comma | TokenKind::CloseBrace)
-            });
+            let type_tokens = self
+                .parse_type_tokens(|kind| matches!(kind, TokenKind::Comma | TokenKind::CloseBrace));
             if type_tokens.is_empty() {
                 return Err(self.error("expected enum field type"));
             }
@@ -404,9 +435,8 @@ impl<'a> Parser<'a> {
     fn parse_struct_field(&mut self) -> Result<StructField, Error> {
         let visibility = self.parse_visibility();
         let name = self.expect_binding_name()?;
-        let type_tokens = self.parse_type_tokens(|kind| {
-            matches!(kind, TokenKind::Comma | TokenKind::CloseBrace)
-        });
+        let type_tokens =
+            self.parse_type_tokens(|kind| matches!(kind, TokenKind::Comma | TokenKind::CloseBrace));
         if type_tokens.is_empty() {
             return Err(self.error("expected struct field type"));
         }
@@ -488,7 +518,11 @@ impl<'a> Parser<'a> {
             (bindings, Some(value))
         };
         self.consume(TokenKind::Semicolon);
-        Ok(BindingDeclaration { kind, bindings, value })
+        Ok(BindingDeclaration {
+            kind,
+            bindings,
+            value,
+        })
     }
 
     fn parse_function(&mut self) -> Result<FunctionDeclaration, Error> {
@@ -899,7 +933,10 @@ impl<'a> Parser<'a> {
             }
             let name = self.expect_binding_name()?;
             let type_tokens = self.parse_type_tokens(|kind| {
-                matches!(kind, TokenKind::Comma | TokenKind::CloseParen | TokenKind::Ellipsis)
+                matches!(
+                    kind,
+                    TokenKind::Comma | TokenKind::CloseParen | TokenKind::Ellipsis
+                )
             });
             if type_tokens.is_empty() {
                 return Err(self.error("expected parameter type"));
@@ -922,9 +959,8 @@ impl<'a> Parser<'a> {
         let mut bindings = Vec::new();
         loop {
             let name = self.expect_binding_name()?;
-            let type_tokens = self.parse_type_tokens(|kind| {
-                matches!(kind, TokenKind::Comma | TokenKind::EqualSign)
-            });
+            let type_tokens = self
+                .parse_type_tokens(|kind| matches!(kind, TokenKind::Comma | TokenKind::EqualSign));
             bindings.push(Binding {
                 name,
                 type_tokens,
@@ -945,7 +981,10 @@ impl<'a> Parser<'a> {
         while self.peek_kind() != Some(&TokenKind::CloseBrace) {
             let name = self.expect_binding_name()?;
             let type_tokens = self.parse_type_tokens(|kind| {
-                matches!(kind, TokenKind::EqualSign | TokenKind::Comma | TokenKind::CloseBrace)
+                matches!(
+                    kind,
+                    TokenKind::EqualSign | TokenKind::Comma | TokenKind::CloseBrace
+                )
             });
             self.expect(TokenKind::EqualSign)?;
             let value = self.parse_until_any(&[TokenKind::Comma, TokenKind::CloseBrace])?;
@@ -1074,7 +1113,10 @@ impl<'a> Parser<'a> {
             } else {
                 Vec::new()
             };
-            items.push(ImportItem { name, items: nested });
+            items.push(ImportItem {
+                name,
+                items: nested,
+            });
             if self.peek_kind() == Some(&TokenKind::Comma) {
                 self.advance();
             } else if self.peek_kind() != Some(&TokenKind::CloseBrace) {
@@ -1176,7 +1218,7 @@ fn keyword_name(kind: &TokenKind) -> Option<String> {
 #[cfg(test)]
 mod tests {
     use super::{
-        BinaryOperator, EnumVariantKind, Expression, Statement, StructField, StructDeclaration,
+        BinaryOperator, EnumVariantKind, Expression, Statement, StructDeclaration, StructField,
         Visibility, parse_enums, parse_functions, parse_structs,
     };
     use crate::{TokenKind, lexer::tokenize};
@@ -1227,10 +1269,8 @@ mod tests {
 
     #[test]
     fn parses_structs_and_fields() {
-        let tokens = tokenize(
-            "pub struct Point { pub x f64, pri y f64, } pri struct Empty {}",
-        )
-        .unwrap();
+        let tokens =
+            tokenize("pub struct Point { pub x f64, pri y f64, } pri struct Empty {}").unwrap();
         let structs = parse_structs(&tokens).unwrap();
         assert_eq!(structs.len(), 2);
         assert_eq!(structs[0].visibility, Some(Visibility::Public));
@@ -1250,11 +1290,14 @@ mod tests {
                 },
             ]
         );
-        assert_eq!(structs[1], StructDeclaration {
-            visibility: Some(Visibility::Private),
-            name: "Empty".into(),
-            fields: Vec::new(),
-        });
+        assert_eq!(
+            structs[1],
+            StructDeclaration {
+                visibility: Some(Visibility::Private),
+                name: "Empty".into(),
+                fields: Vec::new(),
+            }
+        );
     }
 
     #[test]
