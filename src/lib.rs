@@ -265,7 +265,8 @@ mod tests {
         let declarations = compiler
             .parse_bindings(&Source::new(
                 "main.as",
-                "let { name string = value, other i32 = 42 };")
+                "let { name string = value, other i32 = 42 };",
+            ))
             .unwrap();
         assert_eq!(declarations.len(), 1);
         assert_eq!(declarations[0].kind, BindingKind::Let);
