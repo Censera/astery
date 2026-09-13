@@ -1,6 +1,7 @@
 mod cast_pointer;
 mod compiler;
 mod context;
+mod embed;
 mod error;
 mod function;
 mod handler;
@@ -13,6 +14,7 @@ mod user_type;
 pub use cast_pointer::{AddressOfExpression, CastExpression, PointerType};
 pub use compiler::{Compiler, Source};
 pub use context::Context;
+pub use embed::EmbeddedBlock;
 pub use error::{Error, Stage};
 pub use function::Function;
 pub use handler::Handler;
