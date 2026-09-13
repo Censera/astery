@@ -4,7 +4,7 @@
 
 ```rs
 // file: main.as
-//! [type] is a placeholder for the language data types
+//! T is a placeholder for the language data types
 
 // Module declaration
 mod mygame
@@ -17,29 +17,29 @@ use math { function, variable { that } }
 
 // let
 let name = value;
-let name [type] = value;
+let name T = value;
 let name, name, name = value;
 let {
-    name [type] = value,
-    name [type] = value,
-    name [type] = value
+    name T = value,
+    name T = value,
+    name T = value
 };
 let _ = value;
 
 // Constants
-const name [type] = value;
+const name T = value;
 const name, name, name = value;
 const {
-    name [type] = value,
-    name [type] = value,
-    name [type] = value
+    name T = value,
+    name T = value,
+    name T = value
 };
 
 // fn
 fn name() {}
 fn main() {}
 fn name() { return }
-fn [type] name() {
+fn T name() {
     return 0
 }
 name();
@@ -47,8 +47,8 @@ name();
 // Two functions can have the same name as long as they
 // have different params or have different return type.
 fn name() {}
-fn [type] name() {}
-fn [type] name(name type) {}
+fn T name() {}
+fn T name(name T) {}
 
 // Control Flow
 if condition {}
@@ -112,15 +112,15 @@ pub enum Name {}
 pri enum Name {}
 enum Name {
     pub name,
-    pri name([type]),
+    pri name(T),
     name(),
     pub name {
-        name [type],
-        name [type]
+        name T,
+        name T
     },
     name {
-        name [type],
-        name [type]
+        name T,
+        name T
     }
 }
 
@@ -128,8 +128,8 @@ enum Name {
 pub struct Name {}
 pri struct Name {}
 struct Name {
-    pub name [type],
-    pri name [type],
+    pub name T,
+    pri name T,
 }
 
 // Member access
@@ -137,8 +137,8 @@ let value = Name.name;
 
 // Structure Implementation
 into Name {
-    pub fn [type] name() {}
-    pri fn [type] name() {}
+    pub fn T name() {}
+    pri fn T name() {}
 }
 
 // Call function
@@ -185,13 +185,13 @@ let name ?^T = None;
 // from `name(arg)` to `name arg`
 // only if it's one param
 @striped
-fn [type] name(name [type]) {}
+fn T name(name T) {}
 
 @lossely
-fn [type] name(name [type], ...) {}
+fn T name(name T, ...) {}
 
 @lossely
-fn [type] name(name [type], ..., name [type], name [type], ...) {}
+fn T name(name T, ..., name T, name T, ...) {}
 
 // Macros
 macro this() { "this" }
@@ -212,12 +212,12 @@ let value = square!(4);
 
 ## Types
 
-`[type]` is replaced with:
+`T` is a type placeholder and is replaced by a concrete type:
 
 | Type                      | What it is                 |
 | ------------------------- | -------------------------- |
 | `i8`, `i16`, `i32`, `i64` | Signed integers            |
-| `u8`, `u16`, `u32`, `u64` | Unsigned integers           |
+| `u8`, `u16`, `u32`, `u64` | Unsigned integers          |
 | `f32`, `f64`              | Floating point             |
 | `bool`                    | Boolean (`true` / `false`) |
 | `char`                    | Character                  |
@@ -228,10 +228,10 @@ let value = square!(4);
 ### Arrays
 
 ```rs
-let name [type][length];
-let name [type][] = [value, value, value];
-let name [type][length] = [value, value, value];
-let name [type][length, value];
+let name T[length];
+let name T[] = [value, value, value];
+let name T[length] = [value, value, value];
+let name T[length, value];
 
 let value = name[index];
 let value = name[name[index]];
@@ -240,10 +240,10 @@ let value = name[name[index]];
 ### Vectors
 
 ```rs
-let name [type]<length>;
-let name [type]<> = <value, value, value>;
-let name [type]<length> = <value, value, value>;
-let name [type]<length, value>;
+let name T<length>;
+let name T<> = <value, value, value>;
+let name T<length> = <value, value, value>;
+let name T<length, value>;
 
 let value = name<index>;
 let value = name<name>;
@@ -253,15 +253,15 @@ let value = name<name<index>>;
 ### Tuples
 
 ```rs
-let (name, name) [type];
-let (name [type], name [type]);
+let (name, name) T;
+let (name T, name T);
 let (name, name, name) = (value, value, value);
-let (name, name, name) [type] = (value, value, value);
-let (name [type], name [type]) = (value, value);
-let (name [type], _) = (value, _);
-let (_, name [type]) = (_, value);
-let (_, name) [type] = (_, value);
-let (name, _) [type] = (value, _);
+let (name, name, name) T = (value, value, value);
+let (name T, name T) = (value, value);
+let (name T, _) = (value, _);
+let (_, name T) = (_, value);
+let (_, name) T = (_, value);
+let (name, _) T = (value, _);
 let (_, _) = (value, value);
 
 let (a, b) = (1, 2);
@@ -317,11 +317,11 @@ let (a, b) = (b, a);
 
 ```rs
 // Declaration
-type Name = Union::<[type], [type]>;
+type Name = Union::<T, T>;
 
 // Aliases
-type Result::<[type], [type]> = Union:<[type], [type]>;
-type Optional::<[type]> = Union:<[type], None>;
+type Result::<T, T> = Union:<T, T>;
+type Optional::<T> = Union:<T, None>;
 
 // Construction
 // Inferred from value's type
