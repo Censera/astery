@@ -41,7 +41,7 @@
 - [x] Parse user-defined types.
 - [x] Parse casts and pointers.
 - [x] Parse embedded C blocks.
-- [ ] Parse macros and macro calls.
+- [x] Parse macros and macro calls.
 
 ## Semantic analysis
 
