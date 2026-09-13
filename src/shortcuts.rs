@@ -1,3 +1,8 @@
+#[path = "macros.rs"]
+mod macros;
+
+pub use macros::{MacroCall, MacroDeclaration, parse_macro_call, parse_macros};
+
 use an_inkwell::Error;
 
 use crate::{Context, Function, Handler, Module};
