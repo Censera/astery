@@ -84,10 +84,7 @@ enum DeclarationKind {
 }
 
 fn first_declaration_kind(tokens: &[Token]) -> Result<DeclarationKind, Error> {
-    let mut index = 0;
-    while matches!(tokens.get(index).map(Token::kind), Some(TokenKind::Pub | TokenKind::Pri | TokenKind::At)) {
-        index += 1;
-    }
+    let index = skip_modifiers(tokens, 0);
 
     match tokens.get(index).map(Token::kind) {
         Some(TokenKind::Mod) => Ok(DeclarationKind::Module),
@@ -99,26 +96,22 @@ fn first_declaration_kind(tokens: &[Token]) -> Result<DeclarationKind, Error> {
         Some(TokenKind::Let | TokenKind::Const) => Ok(DeclarationKind::Binding),
         Some(TokenKind::Fn) => Ok(DeclarationKind::Function),
         Some(TokenKind::Macro) => Ok(DeclarationKind::Macro),
-        _ => Err(error_at(tokens.get(index).or_else(|| tokens.last()), "unexpected top-level declaration")),
+        _ => Err(error_at(
+            tokens.get(index).or_else(|| tokens.last()),
+            "unexpected top-level declaration",
+        )),
     }
 }
 
 fn top_level_item_end(tokens: &[Token], start: usize) -> Result<usize, Error> {
-    let mut position = start;
-    let first = tokens
-        .get(position)
-        .ok_or_else(|| error_at(tokens.last(), "expected top-level declaration"))?;
-
-    if matches!(first.kind(), TokenKind::Pub | TokenKind::Pri | TokenKind::At) {
-        while matches!(tokens.get(position).map(Token::kind), Some(TokenKind::Pub | TokenKind::Pri | TokenKind::At)) {
-            position += 1;
-        }
-    }
+    let position = skip_modifiers(tokens, start);
 
     match tokens.get(position).map(Token::kind) {
         Some(TokenKind::Mod) => Ok((position + 2).min(tokens.len())),
         Some(TokenKind::Use) => scan_until_statement_end(tokens, start, position + 1),
-        Some(TokenKind::Let | TokenKind::Const) => scan_until_statement_end(tokens, start, position + 1),
+        Some(TokenKind::Let | TokenKind::Const) => {
+            scan_until_statement_end(tokens, start, position + 1)
+        }
         Some(TokenKind::Macro | TokenKind::Enum | TokenKind::Struct | TokenKind::Into | TokenKind::Fn) => {
             scan_braced_declaration(tokens, start)
         }
@@ -130,7 +123,25 @@ fn top_level_item_end(tokens: &[Token], start: usize) -> Result<usize, Error> {
                 scan_until_statement_end(tokens, start, name)
             }
         }
-        _ => Err(error_at(tokens.get(position).or_else(|| tokens.last()), "unexpected top-level declaration")),
+        _ => Err(error_at(
+            tokens.get(position).or_else(|| tokens.last()),
+            "unexpected top-level declaration",
+        )),
+    }
+}
+
+fn skip_modifiers(tokens: &[Token], mut position: usize) -> usize {
+    loop {
+        match tokens.get(position).map(Token::kind) {
+            Some(TokenKind::Pub | TokenKind::Pri) => position += 1,
+            Some(TokenKind::At) => {
+                position += 1;
+                if matches!(tokens.get(position).map(Token::kind), Some(TokenKind::Identifier(_))) {
+                    position += 1;
+                }
+            }
+            _ => return position,
+        }
     }
 }
 
