@@ -16,7 +16,7 @@ fn run() -> Result<(), Error> {
 
 fn main() {
     if let Err(error) = run() {
-        eprintln!("error: {error}");
+        eprintln!("{error}");
         process::exit(1);
     }
 }
