@@ -37,16 +37,10 @@ pub fn parse_pointer_type(tokens: &[Token]) -> Result<PointerType, Error> {
         false
     };
     parser.expect(TokenKind::Caret)?;
-    parser.expect(TokenKind::OpenBracket)?;
-    if parser.peek() == Some(&TokenKind::CloseBracket) {
-        return Err(parser.error("expected pointer type"));
-    }
-    let type_tokens = parser.collect_until(TokenKind::CloseBracket)?;
+    let type_tokens = parser.collect_remaining();
     if type_tokens.is_empty() {
         return Err(parser.error("expected pointer type"));
     }
-    parser.expect(TokenKind::CloseBracket)?;
-    parser.finish()?;
     Ok(PointerType {
         optional,
         type_tokens,
@@ -119,13 +113,6 @@ impl<'a> Parser<'a> {
             .collect()
     }
 
-    fn finish(&self) -> Result<(), Error> {
-        if self.peek().is_some() {
-            return Err(self.error("unexpected token after pointer type"));
-        }
-        Ok(())
-    }
-
     fn error(&self, message: &str) -> Error {
         let token = self
             .tokens
@@ -144,7 +131,10 @@ impl<'a> Parser<'a> {
 
 #[cfg(test)]
 mod tests {
-    use super::{AddressOfExpression, CastExpression, PointerType, parse_address_of, parse_cast, parse_pointer_type};
+    use super::{
+        AddressOfExpression, CastExpression, PointerType, parse_address_of, parse_cast,
+        parse_pointer_type,
+    };
     use crate::{TokenKind, lexer::tokenize};
 
     #[test]
@@ -161,7 +151,7 @@ mod tests {
 
     #[test]
     fn parses_pointer_type() {
-        let tokens = tokenize("^[i32]").unwrap();
+        let tokens = tokenize("^i32").unwrap();
         assert_eq!(
             parse_pointer_type(&tokens).unwrap(),
             PointerType {
@@ -173,7 +163,7 @@ mod tests {
 
     #[test]
     fn parses_optional_pointer_type() {
-        let tokens = tokenize("?^[string]").unwrap();
+        let tokens = tokenize("?^string").unwrap();
         assert_eq!(
             parse_pointer_type(&tokens).unwrap(),
             PointerType {
@@ -202,8 +192,8 @@ mod tests {
     }
 
     #[test]
-    fn rejects_invalid_pointer_type() {
-        let tokens = tokenize("^[ ]").unwrap();
+    fn rejects_empty_pointer_type() {
+        let tokens = tokenize("^").unwrap();
         let error = parse_pointer_type(&tokens).unwrap_err();
         assert!(error.to_string().contains("expected pointer type"));
     }
