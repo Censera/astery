@@ -16,9 +16,10 @@ pub use handler::Handler;
 pub use lexer::{Token, TokenKind};
 pub use module::Module;
 pub use parser::{
-    BinaryOperator, Binding, BindingDeclaration, BindingKind, Block, Expression, ForStatement,
-    FunctionDeclaration, IfStatement, Import, ImportItem, LoopStatement, MatchArm, MatchStatement,
-    ModuleDeclaration, Parameter, Statement, UnaryOperator, WhileStatement,
+    BinaryOperator, Binding, BindingDeclaration, BindingKind, Block, EnumDeclaration, EnumField,
+    EnumVariant, EnumVariantKind, Expression, ForStatement, FunctionDeclaration, IfStatement,
+    Import, ImportItem, LoopStatement, MatchArm, MatchStatement, ModuleDeclaration, Parameter,
+    Statement, UnaryOperator, Visibility, WhileStatement,
 };
 
 #[cfg(test)]
