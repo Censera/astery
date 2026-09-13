@@ -1,5 +1,5 @@
+use super::span::{Located, SourceSpan};
 use super::type_syntax::{self, TypeSyntax};
-use crate::span::{Located, SourceSpan};
 use crate::{Token, TokenKind};
 
 pub type SemanticName = Located<String>;
