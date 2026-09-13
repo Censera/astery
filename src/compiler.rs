@@ -1,9 +1,9 @@
 use crate::error::{Error, Stage};
 use crate::lexer::{Token, tokenize};
 use crate::parser::{
-    BindingDeclaration, EnumDeclaration, FunctionDeclaration, Import, ModuleDeclaration,
-    StructDeclaration, parse_bindings, parse_enums, parse_functions, parse_imports, parse_module,
-    parse_structs,
+    BindingDeclaration, EnumDeclaration, FunctionDeclaration, Import, IntoImplementation,
+    ModuleDeclaration, StructDeclaration, parse_bindings, parse_enums, parse_functions,
+    parse_imports, parse_intos, parse_module, parse_structs,
 };
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -59,6 +59,11 @@ impl Compiler {
     pub fn parse_structs(&self, source: &Source) -> Result<Vec<StructDeclaration>, Error> {
         let tokens = self.tokenize(source)?;
         parse_structs(&tokens)
+    }
+
+    pub fn parse_intos(&self, source: &Source) -> Result<Vec<IntoImplementation>, Error> {
+        let tokens = self.tokenize(source)?;
+        parse_intos(&tokens)
     }
 
     pub fn parse_bindings(&self, source: &Source) -> Result<Vec<BindingDeclaration>, Error> {
