@@ -12,6 +12,7 @@
 - [x] Tokenize module declarations, identifiers, and keywords.
 - [x] Tokenize primitive literals.
 - [x] Tokenize strings and characters.
+- [x] Tokenize strings and characters.
 - [x] Tokenize operators and punctuation.
 - [x] Tokenize visibility and function flags.
 - [x] Tokenize pointer and cast syntax.
@@ -49,9 +50,9 @@
 - [x] Accept the same return-type form for `into` methods.
 - [x] Establish one semantic type representation for primitive, user-defined, pointer, array, vector, tuple, and union types.
 - [x] Make Semantic a real diagnostic stage instead of only a stage name.
-- [ ] Represent casts, address-of, and pointer expressions inside the normal semantic expression model.
+- [x] Represent casts, address-of, and pointer expressions inside the normal semantic expression model.
 - [ ] Expand macros before semantic analysis while preserving useful source locations.
-- [ ] Build one complete program/module parse unit for semantic analysis.
+- [x] Build one complete program/module parse unit for semantic analysis.
 - [ ] Attach source spans to semantic inputs so type and name errors use their real source locations.
 
 ## Semantic analysis
