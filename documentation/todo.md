@@ -39,7 +39,7 @@
 - [x] Parse structs and fields.
 - [x] Parse `into` implementations.
 - [x] Parse user-defined types.
-- [ ] Parse casts and pointers.
+- [x] Parse casts and pointers.
 - [ ] Parse embedded C blocks.
 - [ ] Parse macros and macro calls.
 
