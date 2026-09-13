@@ -64,6 +64,22 @@ pub struct StructField {
     pub type_tokens: Vec<TokenKind>,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct IntoImplementation {
+    pub target: String,
+    pub methods: Vec<MethodDeclaration>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct MethodDeclaration {
+    pub visibility: Option<Visibility>,
+    pub name: String,
+    pub return_type: Vec<TokenKind>,
+    pub parameters: Vec<Parameter>,
+    pub flags: Vec<String>,
+    pub body: Block,
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum BindingKind {
     Let,
@@ -258,6 +274,14 @@ pub fn parse_structs(tokens: &[Token]) -> Result<Vec<StructDeclaration>, Error> 
     .parse_structs()
 }
 
+pub fn parse_intos(tokens: &[Token]) -> Result<Vec<IntoImplementation>, Error> {
+    Parser {
+        tokens,
+        position: 0,
+    }
+    .parse_intos()
+}
+
 pub fn parse_bindings(tokens: &[Token]) -> Result<Vec<BindingDeclaration>, Error> {
     Parser {
         tokens,
@@ -314,6 +338,17 @@ impl<'a> Parser<'a> {
             return Err(self.error("unexpected token after struct"));
         }
         Ok(declarations)
+    }
+
+    fn parse_intos(mut self) -> Result<Vec<IntoImplementation>, Error> {
+        let mut implementations = Vec::new();
+        while self.peek_kind() == Some(&TokenKind::Into) {
+            implementations.push(self.parse_into()?);
+        }
+        if self.peek_kind().is_some() {
+            return Err(self.error("unexpected token after into implementation"));
+        }
+        Ok(implementations)
     }
 
     fn parse_enum(&mut self) -> Result<EnumDeclaration, Error> {
@@ -444,6 +479,45 @@ impl<'a> Parser<'a> {
             visibility,
             name,
             type_tokens,
+        })
+    }
+
+    fn parse_into(&mut self) -> Result<IntoImplementation, Error> {
+        self.expect(TokenKind::Into)?;
+        let target = self.expect_binding_name()?;
+        self.expect(TokenKind::OpenBrace)?;
+        let mut methods = Vec::new();
+        while self.peek_kind() != Some(&TokenKind::CloseBrace) {
+            if self.peek_kind().is_none() {
+                return Err(self.error("unterminated into implementation"));
+            }
+            methods.push(self.parse_method()?);
+        }
+        self.expect(TokenKind::CloseBrace)?;
+        Ok(IntoImplementation { target, methods })
+    }
+
+    fn parse_method(&mut self) -> Result<MethodDeclaration, Error> {
+        let visibility = self.parse_visibility();
+        let flags = self.parse_flags()?;
+        self.expect(TokenKind::Fn)?;
+        let return_type = if self.peek_kind() == Some(&TokenKind::OpenBracket) {
+            self.parse_bracketed_tokens("expected method return type")?
+        } else {
+            Vec::new()
+        };
+        let name = self.expect_binding_name()?;
+        self.expect(TokenKind::OpenParen)?;
+        let parameters = self.parse_parameters()?;
+        self.expect(TokenKind::CloseParen)?;
+        let body = self.parse_block()?;
+        Ok(MethodDeclaration {
+            visibility,
+            name,
+            return_type,
+            parameters,
+            flags,
+            body,
         })
     }
 
@@ -1218,8 +1292,9 @@ fn keyword_name(kind: &TokenKind) -> Option<String> {
 #[cfg(test)]
 mod tests {
     use super::{
-        BinaryOperator, EnumVariantKind, Expression, Statement, StructDeclaration, StructField,
-        Visibility, parse_enums, parse_functions, parse_structs,
+        BinaryOperator, EnumVariantKind, Expression, IntoImplementation, MethodDeclaration, Statement,
+        StructDeclaration, StructField, Visibility, parse_enums, parse_functions, parse_intos,
+        parse_structs,
     };
     use crate::{TokenKind, lexer::tokenize};
 
@@ -1305,6 +1380,48 @@ mod tests {
         let tokens = tokenize("struct Point { pub x, } ").unwrap();
         let error = parse_structs(&tokens).unwrap_err();
         assert!(error.to_string().contains("expected struct field type"));
+    }
+
+    #[test]
+    fn parses_into_implementations() {
+        let tokens = tokenize(
+            "into Point { pub fn [i32] x() {} pri fn y(value i64) {} } into Empty {}",
+        )
+        .unwrap();
+        let implementations = parse_intos(&tokens).unwrap();
+        assert_eq!(implementations.len(), 2);
+        assert_eq!(implementations[0].target, "Point");
+        assert_eq!(implementations[0].methods.len(), 2);
+        assert_eq!(implementations[0].methods[0].visibility, Some(Visibility::Public));
+        assert_eq!(implementations[0].methods[0].name, "x");
+        assert_eq!(
+            implementations[0].methods[0].return_type,
+            vec![TokenKind::Identifier("i32".into())]
+        );
+        assert!(implementations[0].methods[0].parameters.is_empty());
+        assert_eq!(implementations[0].methods[1].visibility, Some(Visibility::Private));
+        assert_eq!(implementations[0].methods[1].name, "y");
+        assert_eq!(
+            implementations[0].methods[1].parameters,
+            vec![super::Parameter {
+                name: "value".into(),
+                type_tokens: vec![TokenKind::Identifier("i64".into())],
+            }]
+        );
+        assert_eq!(
+            implementations[1],
+            IntoImplementation {
+                target: "Empty".into(),
+                methods: Vec::new(),
+            }
+        );
+    }
+
+    #[test]
+    fn rejects_invalid_into_methods() {
+        let tokens = tokenize("into Point { pub name() {} } ").unwrap();
+        let error = parse_intos(&tokens).unwrap_err();
+        assert!(error.to_string().contains("unexpected token"));
     }
 
     #[test]
