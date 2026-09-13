@@ -1292,9 +1292,9 @@ fn keyword_name(kind: &TokenKind) -> Option<String> {
 #[cfg(test)]
 mod tests {
     use super::{
-        BinaryOperator, EnumVariantKind, Expression, IntoImplementation, MethodDeclaration,
-        Statement, StructDeclaration, StructField, Visibility, parse_enums, parse_functions,
-        parse_intos, parse_structs,
+        BinaryOperator, EnumVariantKind, Expression, IntoImplementation,
+        Statement, StructDeclaration, StructField, Visibility, parse_enums,
+        parse_functions, parse_intos, parse_structs,
     };
     use crate::{TokenKind, lexer::tokenize};
 
