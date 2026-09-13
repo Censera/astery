@@ -217,7 +217,7 @@ let value = square!(4);
 | Type                      | What it is                 |
 | ------------------------- | -------------------------- |
 | `i8`, `i16`, `i32`, `i64` | Signed integers            |
-| `u8`, `u16`, `u32`, `u64` | Unsigned integers          |
+| `u8`, `u16`, `u32`, `u64` | Unsigned integers           |
 | `f32`, `f64`              | Floating point             |
 | `bool`                    | Boolean (`true` / `false`) |
 | `char`                    | Character                  |
@@ -361,13 +361,11 @@ Checked, and everything is OK.
 ### Warning
 
 ```
-W [File][Line][Column] | Warning message
-W [main.as][2][8] | Unused variable
+W [src/file.as][Line][Column] Warning message
 ```
 
-## Error
+### Error
 
 ```
-E [File][Line][Column] | Error message
-E [main.as][2][9] | Expected Semicolon `;`
+E [src/file.as][Line][Column] Error message
 ```
