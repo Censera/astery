@@ -10,8 +10,11 @@ use crate::parser::{
     ModuleDeclaration, StructDeclaration, parse_bindings, parse_enums, parse_functions,
     parse_imports, parse_intos, parse_module, parse_structs,
 };
+use crate::program::parse_program;
 use crate::shortcuts::{MacroCall, MacroDeclaration, parse_macro_call, parse_macros};
 use crate::user_type::{UserTypeDeclaration, parse_user_types};
+
+pub use crate::program::Program;
 
 #[path = "parser_contract.rs"]
 mod parser_contract;
@@ -56,6 +59,13 @@ impl Compiler {
     pub fn parse_module(&self, source: &Source) -> Result<ModuleDeclaration, Error> {
         let tokens = self.tokenize(source)?;
         parse_module(&tokens).map_err(|error| error.with_source(source.name()))
+    }
+
+    pub fn parse_program(&self, source: &Source) -> Result<Program, Error> {
+        let normalized = parser_contract::normalize_function_return_types(source.text())
+            .map_err(|error| error.with_source(source.name()))?;
+        let tokens = tokenize(&normalized).map_err(|error| error.with_source(source.name()))?;
+        parse_program(&tokens).map_err(|error| error.with_source(source.name()))
     }
 
     pub fn parse_imports(&self, source: &Source) -> Result<Vec<Import>, Error> {
@@ -140,7 +150,7 @@ impl Compiler {
     }
 
     pub fn compile(&self, source: Source) -> Result<(), Error> {
-        self.parse_imports(&source)?;
-        Err(Error::StageNotImplemented(Stage::Parser))
+        self.parse_program(&source)?;
+        Err(Error::StageNotImplemented(Stage::Semantic))
     }
 }
