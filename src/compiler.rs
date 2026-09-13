@@ -20,10 +20,6 @@ pub use crate::program::Program;
 mod macro_expand;
 #[path = "parser_contract.rs"]
 mod parser_contract;
-#[path = "semantic_input.rs"]
-mod semantic_input;
-#[path = "span.rs"]
-mod span;
 #[path = "type_syntax.rs"]
 mod type_syntax;
 
@@ -146,14 +142,11 @@ impl Compiler {
 
     pub fn validate_type(&self, source: &Source) -> Result<(), Error> {
         let tokens = self.tokenize(source)?;
-        semantic_input::type_input(&tokens).map(|_| ()).map_err(|message| {
-            let (line, column) = tokens
-                .first()
-                .map(|token| (token.line(), token.column()))
-                .unwrap_or((1, 1));
-            Error::Semantic {
-                line,
-                column,
+        let kinds = tokens.iter().map(Token::kind).cloned().collect::<Vec<_>>();
+        type_syntax::parse(&kinds).map(|_| ()).map_err(|message| {
+            Error::Parse {
+                line: 1,
+                column: 1,
                 message,
             }
             .with_source(source.name())
