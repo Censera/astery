@@ -34,7 +34,6 @@
 - [x] Parse shortened conditional statements and expressions.
 - [x] Parse `break` and `continue` with labels.
 - [x] Parse range and inclusive-range expressions.
-- [x] Parse string chains.
 - [x] Parse arrays, vectors, and tuples.
 - [x] Parse enums and enum variants.
 - [ ] Parse structs and fields.
@@ -60,7 +59,6 @@
 - [ ] Check control-flow targets and labels.
 - [ ] Resolve struct and enum members.
 - [ ] Validate function flags.
-- [ ] Validate string-chain operands.
 - [ ] Validate embedded C boundaries.
 
 ## Backend

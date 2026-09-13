@@ -1,5 +1,5 @@
 use crate::error::{Error, Stage};
-use crate::lexer::{Token, TokenKind, tokenize};
+use crate::lexer::{Token, tokenize};
 use crate::parser::{
     BindingDeclaration, EnumDeclaration, FunctionDeclaration, Import, ModuleDeclaration,
     parse_bindings, parse_enums, parse_functions, parse_imports, parse_module,
@@ -65,85 +65,8 @@ impl Compiler {
         parse_functions(&tokens)
     }
 
-    pub fn parse_string_chain(&self, source: &Source) -> Result<Vec<TokenKind>, Error> {
-        let tokens = self.tokenize(source)?;
-        parse_string_chain(&tokens)
-    }
-
     pub fn compile(&self, source: Source) -> Result<(), Error> {
         self.parse_imports(&source)?;
         Err(Error::StageNotImplemented(Stage::Parser))
-    }
-}
-
-fn parse_string_chain(tokens: &[Token]) -> Result<Vec<TokenKind>, Error> {
-    if tokens.is_empty() {
-        return Err(Error::Parse {
-            line: 1,
-            column: 1,
-            message: "expected string chain".into(),
-        });
-    }
-
-    let mut parts = Vec::with_capacity(tokens.len());
-    for token in tokens {
-        if !is_string_chain_part(token.kind()) {
-            return Err(Error::Parse {
-                line: token.line(),
-                column: token.column(),
-                message: "expected string-chain value".into(),
-            });
-        }
-        parts.push(token.kind().clone());
-    }
-
-    Ok(parts)
-}
-
-fn is_string_chain_part(kind: &TokenKind) -> bool {
-    matches!(
-        kind,
-        TokenKind::Identifier(_)
-            | TokenKind::Integer(_)
-            | TokenKind::Float(_)
-            | TokenKind::String(_)
-            | TokenKind::Character(_)
-            | TokenKind::True
-            | TokenKind::False
-            | TokenKind::None
-    )
-}
-
-#[cfg(test)]
-mod tests {
-    use super::{Compiler, Source};
-    use crate::{Stage, TokenKind};
-
-    #[test]
-    fn parses_string_chain() {
-        let compiler = Compiler::new();
-        let parts = compiler
-            .parse_string_chain(&Source::new("test.as", "Hello 42 \"world\" true"))
-            .unwrap();
-
-        assert_eq!(
-            parts,
-            vec![
-                TokenKind::Identifier("Hello".into()),
-                TokenKind::Integer("42".into()),
-                TokenKind::String("world".into()),
-                TokenKind::True,
-            ]
-        );
-    }
-
-    #[test]
-    fn rejects_non_value_in_string_chain() {
-        let compiler = Compiler::new();
-        let error = compiler
-            .parse_string_chain(&Source::new("test.as", "hello + world"))
-            .unwrap_err();
-
-        assert_eq!(error.stage(), Some(Stage::Parser));
     }
 }

@@ -69,7 +69,6 @@ break if condition else continue
 let something = value if condition;
 let somethingelse = value if condition else value;
 
-
 // loops
 loop {}
 loop 'name {
@@ -91,41 +90,22 @@ match variable {
 for i in items {}
 // range syntax for
 for i in 0..10 {}  // exclusive: 0..9
-for i in 0..=9 {}  // inclusive: 0..9 
-
-// String Chains
-// name name name // Spaced Chain "value value value\n"
-// Name can be any primitive type
-
-print name name name;
-print(name name name);
+for i in 0..=9 {}  // inclusive: 0..9
 
 // Names, libraries, flags, and builtins
-// Identifiers are ordinary names. Standard-library functions are identifiers too.
-// An external standard library can provide functions without making them language builtins.
+// Identifiers are ordinary names.
+// Library functions are ordinary identifiers and calls.
 // @flags attach function settings or compiler-recognized behavior to functions.
 // A builtin exists only when the language itself requires compiler-level support.
 
-// Standard Library
+// Primitive values
 let this string = "this";
 let that string = "that";
-
-print "Hello";
-eprint "Error";
-print "Hello" "world!"; // Hello world!\n
-sizeof this; // 16
-length this; // 4
-format this "and" that "."; // this and that.
-format("{} and {}.", this, that); // this and that.
 
 // Sub String
 let hello string = "Hello"[1..3]; // ell
 
 // Shadowing is allowed
-
-// read gets the input from stdin and outputs it
-// as str then -> casts to a string.
-let this string = read -> string;
 
 // Enum
 pub enum Name {}
@@ -152,8 +132,8 @@ struct Name {
     pri name [type],
 }
 
-// Get variable
-print Name.name;
+// Member access
+let value = Name.name;
 
 // Structure Implementation
 into Name {
@@ -162,7 +142,7 @@ into Name {
 }
 
 // Call function
-print Name.name();
+let value = Name.name();
 
 // User's types init using the type keyword
 type Point i64
@@ -220,8 +200,7 @@ macro square(x) {
     x * x
 }
 
-print this!();
-print square!(4);
+let value = square!(4);
 ```
 
 ## Experimental
@@ -254,8 +233,8 @@ let name [type][] = [value, value, value];
 let name [type][length] = [value, value, value];
 let name [type][length, value];
 
-print name[index];
-print name[name[index]];
+let value = name[index];
+let value = name[name[index]];
 ```
 
 ### Vectors
@@ -266,17 +245,11 @@ let name [type]<> = <value, value, value>;
 let name [type]<length> = <value, value, value>;
 let name [type]<length, value>;
 
-print name<index>;
-print name<name>;
-print name<name<index>>;
-
-let fixed i64[3];              // arrays: fixed-size, no push/pop/len
-let items i64<>;               // vectors: growable by default, push/pop/len builtin
-let items i64<> = <1, 2, 3>;
-items.push(5);
-items.pop();
-print items.len();
+let value = name<index>;
+let value = name<name>;
+let value = name<name<index>>;
 ```
+
 ### Tuples
 
 ```rs
@@ -360,10 +333,10 @@ let r Result::<i64, string> = "division by zero";
 // Not by handpicked constructor name
 match r {
     i64(value) {
-        print "got" value;
+        let _ = value;
     },
     string(message) {
-        eprint message;
+        let _ = message;
     }
 }
 
