@@ -1,11 +1,4 @@
 #!/usr/bin/env python3
-"""Make precise, verified edits to text files without loading file contents into the command line.
-
-The tool reads the complete file internally, but editing commands identify small anchors,
-line ranges, or regular expressions. Every mutating operation verifies its match count and
-writes atomically only after all requested edits succeed.
-"""
-
 from __future__ import annotations
 
 import argparse
