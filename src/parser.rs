@@ -902,7 +902,11 @@ impl<'a> Parser<'a> {
         let mut angle_depth = 0usize;
 
         while let Some(kind) = self.peek_kind() {
-            if paren_depth == 0 && bracket_depth == 0 && angle_depth == 0 && Self::cast_target_terminator(kind) {
+            if paren_depth == 0
+                && bracket_depth == 0
+                && angle_depth == 0
+                && Self::cast_target_terminator(kind)
+            {
                 break;
             }
             match kind {
@@ -1373,9 +1377,9 @@ fn keyword_name(kind: &TokenKind) -> Option<String> {
 #[cfg(test)]
 mod tests {
     use super::{
-        BinaryOperator, EnumVariantKind, Expression, IntoImplementation,
-        Statement, StructDeclaration, StructField, Visibility, parse_enums,
-        parse_functions, parse_intos, parse_structs,
+        BinaryOperator, EnumVariantKind, Expression, IntoImplementation, Statement,
+        StructDeclaration, StructField, Visibility, parse_enums, parse_functions, parse_intos,
+        parse_structs,
     };
     use crate::{TokenKind, lexer::tokenize};
 

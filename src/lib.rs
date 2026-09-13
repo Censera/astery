@@ -194,7 +194,10 @@ mod tests {
                 "mod main use { standard } struct Point { x i32 } fn i32 answer() { return 42 }",
             ))
             .unwrap();
-        assert_eq!(program.module.as_ref().map(|module| module.name.as_str()), Some("main"));
+        assert_eq!(
+            program.module.as_ref().map(|module| module.name.as_str()),
+            Some("main")
+        );
         assert_eq!(program.imports.len(), 1);
         assert_eq!(program.structs.len(), 1);
         assert_eq!(program.functions.len(), 1);

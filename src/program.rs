@@ -115,9 +115,13 @@ fn top_level_item_end(tokens: &[Token], start: usize) -> Result<usize, Error> {
         Some(TokenKind::Let | TokenKind::Const) => {
             scan_until_statement_end(tokens, start, position + 1)
         }
-        Some(TokenKind::Macro | TokenKind::Enum | TokenKind::Struct | TokenKind::Into | TokenKind::Fn) => {
-            scan_braced_declaration(tokens, start)
-        }
+        Some(
+            TokenKind::Macro
+            | TokenKind::Enum
+            | TokenKind::Struct
+            | TokenKind::Into
+            | TokenKind::Fn,
+        ) => scan_braced_declaration(tokens, start),
         Some(TokenKind::Type) => {
             let name = position + 2;
             if tokens.get(name).map(Token::kind) == Some(&TokenKind::Struct) {
@@ -139,7 +143,10 @@ fn skip_modifiers(tokens: &[Token], mut position: usize) -> usize {
             Some(TokenKind::Pub | TokenKind::Pri) => position += 1,
             Some(TokenKind::At) => {
                 position += 1;
-                if matches!(tokens.get(position).map(Token::kind), Some(TokenKind::Identifier(_))) {
+                if matches!(
+                    tokens.get(position).map(Token::kind),
+                    Some(TokenKind::Identifier(_))
+                ) {
                     position += 1;
                 }
             }
@@ -162,9 +169,7 @@ fn scan_braced_declaration(tokens: &[Token], start: usize) -> Result<usize, Erro
             TokenKind::CloseBracket if bracket_depth > 0 => bracket_depth -= 1,
             TokenKind::OpenAngle if paren_depth == 0 && bracket_depth == 0 => angle_depth += 1,
             TokenKind::CloseAngle if angle_depth > 0 => angle_depth -= 1,
-            TokenKind::OpenBrace
-                if paren_depth == 0 && bracket_depth == 0 && angle_depth == 0 =>
-            {
+            TokenKind::OpenBrace if paren_depth == 0 && bracket_depth == 0 && angle_depth == 0 => {
                 return find_matching_brace(tokens, position).map(|end| end + 1);
             }
             _ => {}
@@ -172,7 +177,10 @@ fn scan_braced_declaration(tokens: &[Token], start: usize) -> Result<usize, Erro
         position += 1;
     }
 
-    Err(error_at(tokens.last(), "expected `{` in top-level declaration"))
+    Err(error_at(
+        tokens.last(),
+        "expected `{` in top-level declaration",
+    ))
 }
 
 fn find_matching_brace(tokens: &[Token], open: usize) -> Result<usize, Error> {
@@ -189,7 +197,10 @@ fn find_matching_brace(tokens: &[Token], open: usize) -> Result<usize, Error> {
             _ => {}
         }
     }
-    Err(error_at(tokens.last(), "unterminated top-level declaration"))
+    Err(error_at(
+        tokens.last(),
+        "unterminated top-level declaration",
+    ))
 }
 
 fn scan_until_statement_end(
@@ -210,17 +221,14 @@ fn scan_until_statement_end(
             TokenKind::CloseBracket if bracket_depth > 0 => bracket_depth -= 1,
             TokenKind::OpenBrace => brace_depth += 1,
             TokenKind::CloseBrace if brace_depth > 0 => brace_depth -= 1,
-            TokenKind::Semicolon
-                if paren_depth == 0 && bracket_depth == 0 && brace_depth == 0 =>
-            {
+            TokenKind::Semicolon if paren_depth == 0 && bracket_depth == 0 && brace_depth == 0 => {
                 return Ok(current + 1);
             }
-            kind
-                if current > start
-                    && paren_depth == 0
-                    && bracket_depth == 0
-                    && brace_depth == 0
-                    && is_top_level_declaration_start(kind) =>
+            kind if current > start
+                && paren_depth == 0
+                && bracket_depth == 0
+                && brace_depth == 0
+                && is_top_level_declaration_start(kind) =>
             {
                 return Ok(current);
             }

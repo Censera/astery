@@ -237,7 +237,10 @@ mod tests {
         assert_eq!(call.name, "square");
         assert_eq!(call.arguments.len(), 2);
         assert!(matches!(call.arguments[0][0].kind(), TokenKind::Integer(value) if value == "1"));
-        assert!(matches!(call.arguments[1][0].kind(), TokenKind::OpenBracket));
+        assert!(matches!(
+            call.arguments[1][0].kind(),
+            TokenKind::OpenBracket
+        ));
     }
 
     #[test]
@@ -245,11 +248,21 @@ mod tests {
         let tokens = tokenize("macro pair(a, b) { (a, b) }").unwrap();
         let macro_declaration = &parse_macros(&tokens).unwrap()[0];
         assert_eq!(macro_declaration.parameters, vec!["a", "b"]);
-        assert!(matches!(macro_declaration.body[0].kind(), TokenKind::OpenParen));
-        assert!(matches!(macro_declaration.body[1].kind(), TokenKind::Identifier(name) if name == "a"));
+        assert!(matches!(
+            macro_declaration.body[0].kind(),
+            TokenKind::OpenParen
+        ));
+        assert!(
+            matches!(macro_declaration.body[1].kind(), TokenKind::Identifier(name) if name == "a")
+        );
         assert!(matches!(macro_declaration.body[2].kind(), TokenKind::Comma));
-        assert!(matches!(macro_declaration.body[3].kind(), TokenKind::Identifier(name) if name == "b"));
-        assert!(matches!(macro_declaration.body[4].kind(), TokenKind::CloseParen));
+        assert!(
+            matches!(macro_declaration.body[3].kind(), TokenKind::Identifier(name) if name == "b")
+        );
+        assert!(matches!(
+            macro_declaration.body[4].kind(),
+            TokenKind::CloseParen
+        ));
     }
 
     #[test]

@@ -12,11 +12,11 @@ pub fn expand_macros(tokens: &[Token]) -> Result<Vec<Token>, Error> {
     for (start, end) in &spans {
         let declarations = parse_macros(&tokens[*start..*end])?;
         for declaration in declarations {
-            if definitions.insert(declaration.name.clone(), declaration).is_some() {
-                return Err(error_at(
-                    tokens.get(*start),
-                    "duplicate macro declaration",
-                ));
+            if definitions
+                .insert(declaration.name.clone(), declaration)
+                .is_some()
+            {
+                return Err(error_at(tokens.get(*start), "duplicate macro declaration"));
             }
         }
     }
@@ -101,10 +101,7 @@ fn expand_tokens(
     while position < tokens.len() {
         if let Some((name, argument_end)) = macro_call_at(tokens, position) {
             let definition = definitions.get(&name).ok_or_else(|| {
-                error_at(
-                    tokens.get(position),
-                    &format!("unknown macro `{name}`"),
-                )
+                error_at(tokens.get(position), &format!("unknown macro `{name}`"))
             })?;
             let (arguments, next) = parse_call_arguments(tokens, position, argument_end)?;
 
@@ -154,7 +151,10 @@ fn parse_call_arguments(
     let mut arguments = Vec::new();
     let mut position = open_paren + 1;
 
-    if matches!(tokens.get(position).map(Token::kind), Some(TokenKind::CloseParen)) {
+    if matches!(
+        tokens.get(position).map(Token::kind),
+        Some(TokenKind::CloseParen)
+    ) {
         return Ok((arguments, position + 1));
     }
 
@@ -164,9 +164,7 @@ fn parse_call_arguments(
 
         while let Some(token) = tokens.get(position) {
             match token.kind() {
-                TokenKind::OpenParen | TokenKind::OpenBracket | TokenKind::OpenBrace => {
-                    depth += 1
-                }
+                TokenKind::OpenParen | TokenKind::OpenBracket | TokenKind::OpenBrace => depth += 1,
                 TokenKind::CloseParen | TokenKind::CloseBracket | TokenKind::CloseBrace => {
                     if depth == 0 {
                         break;
@@ -180,21 +178,18 @@ fn parse_call_arguments(
         }
 
         if argument_start == position {
-            return Err(error_at(
-                tokens.get(position),
-                "expected macro argument",
-            ));
+            return Err(error_at(tokens.get(position), "expected macro argument"));
         }
         arguments.push(tokens[argument_start..position].to_vec());
 
         match tokens.get(position).map(Token::kind) {
             Some(TokenKind::Comma) => {
                 position += 1;
-                if matches!(tokens.get(position).map(Token::kind), Some(TokenKind::CloseParen)) {
-                    return Err(error_at(
-                        tokens.get(position),
-                        "expected macro argument",
-                    ));
+                if matches!(
+                    tokens.get(position).map(Token::kind),
+                    Some(TokenKind::CloseParen)
+                ) {
+                    return Err(error_at(tokens.get(position), "expected macro argument"));
                 }
             }
             Some(TokenKind::CloseParen) => return Ok((arguments, position + 1)),
@@ -270,7 +265,9 @@ mod tests {
     #[test]
     fn expands_nested_macros() {
         assert_eq!(
-            kinds("macro square(x) { x * x } macro double(x) { square!(x) + square!(x) } double!(3)"),
+            kinds(
+                "macro square(x) { x * x } macro double(x) { square!(x) + square!(x) } double!(3)"
+            ),
             vec![
                 TokenKind::Integer("3".into()),
                 TokenKind::Multiply,
@@ -299,19 +296,19 @@ mod tests {
 
     #[test]
     fn rejects_wrong_argument_count() {
-        let error = expand_macros(&tokenize("macro pair(a, b) { a + b } pair!(1)").unwrap())
-            .unwrap_err();
+        let error =
+            expand_macros(&tokenize("macro pair(a, b) { a + b } pair!(1)").unwrap()).unwrap_err();
         assert!(error.to_string().contains("expects 2 argument(s), found 1"));
     }
 
     #[test]
     fn rejects_recursive_expansion() {
-        let error = expand_macros(
-            &tokenize("macro recurse() { recurse!() } recurse!()").unwrap(),
-        )
-        .unwrap_err();
-        assert!(error
-            .to_string()
-            .contains("macro expansion exceeded the maximum depth"));
+        let error = expand_macros(&tokenize("macro recurse() { recurse!() } recurse!()").unwrap())
+            .unwrap_err();
+        assert!(
+            error
+                .to_string()
+                .contains("macro expansion exceeded the maximum depth")
+        );
     }
 }
