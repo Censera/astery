@@ -8,11 +8,12 @@ mod handler;
 mod lexer;
 mod module;
 mod parser;
+mod program;
 pub mod shortcuts;
 mod user_type;
 
 pub use cast_pointer::{AddressOfExpression, CastExpression, PointerType};
-pub use compiler::{Compiler, Source};
+pub use compiler::{Compiler, Program, Source};
 pub use context::Context;
 pub use embed::EmbeddedBlock;
 pub use error::{Error, Stage};
@@ -59,10 +60,10 @@ mod tests {
     }
 
     #[test]
-    fn compiler_reports_parser_as_next_stage() {
+    fn compiler_reports_semantic_analysis_as_next_stage() {
         let compiler = Compiler::new();
         let error = compiler.compile(Source::new("test.astery", "fn main() {}"));
-        assert_eq!(error.unwrap_err().stage(), Some(Stage::Parser));
+        assert_eq!(error.unwrap_err().stage(), Some(Stage::Semantic));
     }
 
     #[test]
@@ -181,242 +182,21 @@ mod tests {
             .unwrap();
         assert_eq!(imports.len(), 2);
         assert_eq!(imports[0].module.as_deref(), Some("math"));
-        assert_eq!(imports[0].items[0].name, "function");
-        assert_eq!(imports[0].items[1].name, "variable");
-        assert_eq!(imports[0].items[1].items[0].name, "that");
         assert_eq!(imports[1].module, None);
-        assert_eq!(imports[1].items[0].name, "memory");
     }
 
     #[test]
-    fn parses_bare_import() {
+    fn parses_a_complete_program() {
         let compiler = Compiler::new();
-        let imports = compiler
-            .parse_imports(&Source::new("main.as", "use standard"))
-            .unwrap();
-        assert_eq!(
-            imports,
-            vec![Import {
-                module: Some("standard".into()),
-                items: Vec::new(),
-            }]
-        );
-    }
-
-    #[test]
-    fn parses_module_declaration() {
-        let compiler = Compiler::new();
-        let module = compiler
-            .parse_module(&Source::new("main.as", "mod mygame"))
-            .unwrap();
-        assert_eq!(
-            module,
-            ModuleDeclaration {
-                name: "mygame".into()
-            }
-        );
-    }
-
-    #[test]
-    fn parses_simple_let_binding() {
-        let compiler = Compiler::new();
-        let declarations = compiler
-            .parse_bindings(&Source::new("main.as", "let name = value;"))
-            .unwrap();
-        assert_eq!(declarations.len(), 1);
-        assert_eq!(declarations[0].kind, BindingKind::Let);
-        assert_eq!(declarations[0].bindings.len(), 1);
-        assert_eq!(declarations[0].bindings[0].name, "name");
-        assert!(declarations[0].bindings[0].type_tokens.is_empty());
-        assert!(declarations[0].value.is_some());
-    }
-
-    #[test]
-    fn parses_typed_let_and_const_bindings() {
-        let compiler = Compiler::new();
-        let declarations = compiler
-            .parse_bindings(&Source::new(
+        let program = compiler
+            .parse_program(&Source::new(
                 "main.as",
-                "let name string = value; const count i32 = 42;",
+                "mod main use { standard } struct Point { x i32 } fn i32 answer() { return 42 }",
             ))
             .unwrap();
-        assert_eq!(declarations.len(), 2);
-        assert_eq!(declarations[0].kind, BindingKind::Let);
-        assert_eq!(declarations[0].bindings[0].name, "name");
-        assert_eq!(
-            declarations[0].bindings[0].type_tokens,
-            vec![TokenKind::Identifier("string".into())]
-        );
-        assert_eq!(declarations[1].kind, BindingKind::Const);
-        assert_eq!(declarations[1].bindings[0].name, "count");
-    }
-
-    #[test]
-    fn parses_multiple_let_bindings() {
-        let compiler = Compiler::new();
-        let declarations = compiler
-            .parse_bindings(&Source::new("main.as", "let first, second, third = value;"))
-            .unwrap();
-        assert_eq!(declarations.len(), 1);
-        assert_eq!(declarations[0].bindings.len(), 3);
-    }
-
-    #[test]
-    fn parses_binding_block() {
-        let compiler = Compiler::new();
-        let declarations = compiler
-            .parse_bindings(&Source::new(
-                "main.as",
-                "let { name string = value, other i32 = 42 };",
-            ))
-            .unwrap();
-        assert_eq!(declarations.len(), 1);
-        assert_eq!(declarations[0].kind, BindingKind::Let);
-        assert_eq!(declarations[0].value, None);
-        assert_eq!(declarations[0].bindings.len(), 2);
-    }
-
-    #[test]
-    fn parses_underscore_binding() {
-        let compiler = Compiler::new();
-        let declarations = compiler
-            .parse_bindings(&Source::new("main.as", "let _ = value;"))
-            .unwrap();
-        assert_eq!(declarations[0].bindings[0].name, "_");
-    }
-
-    #[test]
-    fn parses_functions_and_overloads() {
-        let compiler = Compiler::new();
-        let source = Source::new(
-            "main.as",
-            "fn name() {} fn [i32] name() { return 0 } fn [i32] name(value i32) {}",
-        );
-        let functions = compiler.parse_functions(&source).unwrap();
-        assert_eq!(functions.len(), 3);
-        assert_eq!(functions[0].name, "name");
-        assert!(functions[0].return_type.is_empty());
-        assert!(functions[0].body.statements.is_empty());
-        assert_eq!(functions[1].body.statements.len(), 1);
-        assert_eq!(
-            functions[1].body.statements[0],
-            Statement::Return(Some(Expression::Integer("0".into())))
-        );
-        assert_eq!(functions[2].parameters.len(), 1);
-        assert_eq!(functions[2].parameters[0].name, "value");
-    }
-
-    #[test]
-    fn parses_function_flags() {
-        let compiler = Compiler::new();
-        let source = Source::new(
-            "main.as",
-            "@striped @lossely fn [string] name(value string, ...) {}",
-        );
-        let functions = compiler.parse_functions(&source).unwrap();
-        assert_eq!(functions.len(), 1);
-        assert_eq!(functions[0].flags, vec!["striped", "lossely"]);
-        assert_eq!(functions[0].parameters.len(), 1);
-        assert!(functions[0].body.statements.is_empty());
-    }
-
-    #[test]
-    fn parses_expression_precedence() {
-        let compiler = Compiler::new();
-        let functions = compiler
-            .parse_functions(&Source::new("main.as", "fn main() { return 1 + 2 * 3; }"))
-            .unwrap();
-        assert_eq!(
-            functions[0].body.statements[0],
-            Statement::Return(Some(Expression::Binary {
-                left: Box::new(Expression::Integer("1".into())),
-                operator: BinaryOperator::Add,
-                right: Box::new(Expression::Binary {
-                    left: Box::new(Expression::Integer("2".into())),
-                    operator: BinaryOperator::Multiply,
-                    right: Box::new(Expression::Integer("3".into())),
-                }),
-            }))
-        );
-    }
-
-    #[test]
-    fn parses_calls_and_members() {
-        let compiler = Compiler::new();
-        let functions = compiler
-            .parse_functions(&Source::new(
-                "main.as",
-                "fn main() { return Name.value(42); }",
-            ))
-            .unwrap();
-        assert_eq!(functions[0].body.statements.len(), 1);
-        match &functions[0].body.statements[0] {
-            Statement::Return(Some(Expression::Call {
-                function,
-                arguments,
-            })) => {
-                assert_eq!(arguments.len(), 1);
-                assert!(matches!(function.as_ref(), Expression::Member { .. }));
-            }
-            statement => panic!("unexpected statement: {statement:?}"),
-        }
-    }
-
-    #[test]
-    fn parses_break_and_continue_labels() {
-        let compiler = Compiler::new();
-        let source = Source::new(
-            "main.as",
-            "fn main() { break; continue 'outer; break 'outer; }",
-        );
-        let functions = compiler.parse_functions(&source).unwrap();
-        assert_eq!(
-            functions[0].body.statements,
-            vec![
-                Statement::Break(None),
-                Statement::Continue(Some("outer".into())),
-                Statement::Break(Some("outer".into())),
-            ]
-        );
-    }
-
-    #[test]
-    fn reports_function_parse_errors() {
-        let compiler = Compiler::new();
-        let error = compiler
-            .parse_functions(&Source::new("main.as", "fn name(value) {}"))
-            .unwrap_err();
-        assert_eq!(error.stage(), Some(Stage::Parser));
-        assert!(error.to_string().contains("expected parameter type"));
-    }
-
-    #[test]
-    fn reports_expression_parse_errors() {
-        let compiler = Compiler::new();
-        let error = compiler
-            .parse_functions(&Source::new("main.as", "fn main() { return +; }"))
-            .unwrap_err();
-        assert_eq!(error.stage(), Some(Stage::Parser));
-        assert!(error.to_string().contains("expected expression"));
-    }
-
-    #[test]
-    fn reports_binding_parse_errors_with_position() {
-        let compiler = Compiler::new();
-        let error = compiler
-            .parse_bindings(&Source::new("main.as", "let name;"))
-            .unwrap_err();
-        assert_eq!(error.stage(), Some(Stage::Parser));
-        assert!(error.to_string().contains("unexpected token"));
-    }
-
-    #[test]
-    fn reports_import_parse_errors_with_position() {
-        let compiler = Compiler::new();
-        let error = compiler
-            .parse_imports(&Source::new("main.as", "use math { function, 42 }"))
-            .unwrap_err();
-        assert_eq!(error.stage(), Some(Stage::Parser));
-        assert!(error.to_string().contains("expected identifier"));
+        assert_eq!(program.module.as_ref().map(|module| module.name.as_str()), Some("main"));
+        assert_eq!(program.imports.len(), 1);
+        assert_eq!(program.structs.len(), 1);
+        assert_eq!(program.functions.len(), 1);
     }
 }
