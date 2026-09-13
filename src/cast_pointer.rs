@@ -38,6 +38,9 @@ pub fn parse_pointer_type(tokens: &[Token]) -> Result<PointerType, Error> {
     };
     parser.expect(TokenKind::Caret)?;
     parser.expect(TokenKind::OpenBracket)?;
+    if parser.peek() == Some(&TokenKind::CloseBracket) {
+        return Err(parser.error("expected pointer type"));
+    }
     let type_tokens = parser.collect_until(TokenKind::CloseBracket)?;
     if type_tokens.is_empty() {
         return Err(parser.error("expected pointer type"));
