@@ -12,6 +12,7 @@
 - [x] Tokenize module declarations, identifiers, and keywords.
 - [x] Tokenize primitive literals.
 - [x] Tokenize strings and characters.
+- [x] Tokenize strings and characters.
 - [x] Tokenize operators and punctuation.
 - [x] Tokenize visibility and function flags.
 - [x] Tokenize pointer and cast syntax.
@@ -52,7 +53,7 @@
 - [x] Represent casts, address-of, and pointer expressions inside the normal semantic expression model.
 - [x] Expand macros before semantic analysis while preserving useful source locations.
 - [x] Build one complete program/module parse unit for semantic analysis.
-- [ ] Attach source spans to semantic inputs so type and name errors use their real source locations.
+- [x] Attach source spans to semantic inputs so type and name errors use their real source locations.
 
 ## Semantic analysis
 
@@ -88,3 +89,4 @@
 - [ ] Lower branches and loops.
 - [ ] Lower pointers, allocation, loads, and stores.
 - [ ] Lower arrays, vectors, and tuples.
+- [ ] Lower structs and enums.
