@@ -18,14 +18,15 @@ pub use module::Module;
 pub use parser::{
     BinaryOperator, Binding, BindingDeclaration, BindingKind, Block, EnumDeclaration, EnumField,
     EnumVariant, EnumVariantKind, Expression, ForStatement, FunctionDeclaration, IfStatement,
-    Import, ImportItem, LoopStatement, MatchArm, MatchStatement, ModuleDeclaration, Parameter,
-    Statement, StructDeclaration, StructField, UnaryOperator, Visibility, WhileStatement,
+    Import, ImportItem, IntoImplementation, LoopStatement, MatchArm, MatchStatement,
+    MethodDeclaration, ModuleDeclaration, Parameter, Statement, StructDeclaration, StructField,
+    UnaryOperator, Visibility, WhileStatement,
 };
 
 #[cfg(test)]
 mod tests {
     use super::{
-        BinaryOperator, BindingKind, Compiler, Context, Error, Expression, Import, ImportItem,
+        BinaryOperator, BindingKind, Compiler, Context, Error, Expression, Import,
         ModuleDeclaration, Source, Stage, Statement, Token, TokenKind, shortcuts,
     };
 
@@ -260,8 +261,8 @@ mod tests {
         let declarations = compiler
             .parse_bindings(&Source::new(
                 "main.as",
-                "let { name string = value, other i32 = 42 };",
-            ))
+                "let { name string = value, other i32 = 42 };
+            "))
             .unwrap();
         assert_eq!(declarations.len(), 1);
         assert_eq!(declarations[0].kind, BindingKind::Let);
