@@ -8,9 +8,9 @@ use crate::span::{SourceSpan, Spanned};
 /// macro-expanded token stream that produced that program.
 ///
 /// The parser program is the structural input to semantic analysis. The token
-/// stream remains owned by the semantic stage because parser nodes currently
-/// do not carry their own spans, and later diagnostics must not reconstruct
-/// locations by reparsing source text.
+/// stream is stored as `Spanned<Token>` so semantic lowering can attach exact
+/// source locations to names, types, expressions, and diagnostics without
+/// reparsing source text or guessing locations from identifier names.
 ///
 /// Source text remains owned as well so diagnostics can identify the source
 /// file and future reporting can inspect the original source when necessary.
@@ -18,15 +18,13 @@ use crate::span::{SourceSpan, Spanned};
 /// When semantic lowering introduces its own representation, parser-only
 /// syntax details may be discarded once no diagnostic or backend requirement
 /// depends on them. Semantic names, resolved declarations, resolved types,
-/// required expression structure, and source locations must remain. The
-/// expanded token stream is retained until equivalent source-location data is
-/// represented directly by the semantic model.
+/// required expression structure, and their source locations must remain.
 #[derive(Debug)]
 pub(crate) struct SemanticProgram {
     pub(crate) source: Source,
     pub(crate) module: SemanticModule,
     pub(crate) program: Program,
-    pub(crate) tokens: Vec<Token>,
+    pub(crate) tokens: Vec<Spanned<Token>>,
 }
 
 /// The root module and imports belonging to one parsed source unit.
@@ -91,6 +89,13 @@ impl SemanticImportItem {
 
 impl SemanticProgram {
     pub(crate) fn new(source: Source, program: Program, tokens: Vec<Token>) -> Self {
+        let tokens = tokens
+            .into_iter()
+            .map(|token| {
+                let span = token.span();
+                Spanned::new(token, span)
+            })
+            .collect();
         let module = SemanticModule::from_program(&program);
         Self {
             source,
@@ -108,18 +113,16 @@ impl SemanticProgram {
         self.source.text()
     }
 
-    pub(crate) fn tokens(&self) -> &[Token] {
+    pub(crate) fn tokens(&self) -> &[Spanned<Token>] {
         &self.tokens
     }
 
-    pub(crate) fn token(&self, index: usize) -> Option<Spanned<&Token>> {
-        self.tokens
-            .get(index)
-            .map(|token| Spanned::new(token, token.span()))
+    pub(crate) fn token(&self, index: usize) -> Option<&Spanned<Token>> {
+        self.tokens.get(index)
     }
 
     pub(crate) fn token_span(&self, index: usize) -> Option<SourceSpan> {
-        self.tokens.get(index).map(Token::span)
+        self.tokens.get(index).map(Spanned::span)
     }
 
     pub(crate) fn span_for_range(&self, start: usize, end: usize) -> Option<SourceSpan> {
@@ -129,7 +132,7 @@ impl SemanticProgram {
 
         let first = self.tokens.get(start)?;
         let last = self.tokens.get(end - 1)?;
-        Some(SourceSpan::covering(first.span().start, last.span().end))
+        Some(SourceSpan::covering(first.span.start, last.span.end))
     }
 
     pub(crate) fn semantic_error(
