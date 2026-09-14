@@ -9,6 +9,8 @@ mod lexer;
 mod module;
 mod parser;
 mod program;
+mod semantic;
+mod span;
 pub mod shortcuts;
 mod user_type;
 
