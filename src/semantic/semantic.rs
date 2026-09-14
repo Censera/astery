@@ -1,10 +1,50 @@
 use crate::compiler::{Program, Source};
 use crate::error::Error;
 use crate::lexer::Token;
-use crate::parser::ImportItem;
+use crate::parser::{ImportItem, Visibility};
 use crate::span::{SourceSpan, Spanned};
 
 mod type_syntax;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) enum SemanticVisibility {
+    Public,
+    Private,
+}
+
+impl From<Visibility> for SemanticVisibility {
+    fn from(value: Visibility) -> Self {
+        match value {
+            Visibility::Public => Self::Public,
+            Visibility::Private => Self::Private,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) enum CompilerAttribute {
+    Striped,
+    Lossely,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
+pub(crate) struct SemanticFunctionAttributes {
+    pub(crate) compiler: Vec<CompilerAttribute>,
+}
+
+impl SemanticFunctionAttributes {
+    pub(crate) fn from_flags(flags: &[String]) -> Self {
+        let compiler = flags
+            .iter()
+            .filter_map(|flag| match flag.as_str() {
+                "striped" => Some(CompilerAttribute::Striped),
+                "lossely" => Some(CompilerAttribute::Lossely),
+                _ => None,
+            })
+            .collect();
+        Self { compiler }
+    }
+}
 
 /// Semantic analysis owns the source, the complete parser program, and the
 /// macro-expanded token stream that produced that program.
