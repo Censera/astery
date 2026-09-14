@@ -239,13 +239,11 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_union(&mut self) -> Result<TypeSyntax, String> {
-        if !self.take(TokenKind::DoubleColon)
-            && !self.take(TokenKind::Colon)
-            && !self.take(TokenKind::BitNot)
-        {
+        if self.take(TokenKind::DoubleColon) || self.take(TokenKind::Colon) {
+            self.expect_any(&[TokenKind::OpenAngle, TokenKind::Less], "expected `<` in union type")?;
+        } else if !self.take(TokenKind::BitNot) {
             return Err("expected `::` in union type".into());
         }
-        self.expect_any(&[TokenKind::OpenAngle, TokenKind::Less], "expected `<` in union type")?;
         let mut types = Vec::new();
         if self.take_any(&[TokenKind::CloseAngle, TokenKind::Greater]) {
             return Err("union type requires at least one member".into());
