@@ -11,6 +11,7 @@ use crate::parser::{
     parse_imports, parse_intos, parse_module, parse_structs,
 };
 use crate::program::parse_program;
+use crate::semantic::SemanticProgram;
 use crate::shortcuts::{MacroCall, MacroDeclaration, parse_macro_call, parse_macros};
 use crate::user_type::{UserTypeDeclaration, parse_user_types};
 
@@ -70,6 +71,11 @@ impl Compiler {
         let expanded = macro_expand::expand_macros(&tokens)
             .map_err(|error| error.with_source(source.name()))?;
         parse_program(&expanded).map_err(|error| error.with_source(source.name()))
+    }
+
+    fn semantic_program(&self, source: Source) -> Result<SemanticProgram, Error> {
+        let program = self.parse_program(&source)?;
+        Ok(SemanticProgram::new(source, program))
     }
 
     pub fn parse_imports(&self, source: &Source) -> Result<Vec<Import>, Error> {
@@ -154,7 +160,7 @@ impl Compiler {
     }
 
     pub fn compile(&self, source: Source) -> Result<(), Error> {
-        self.parse_program(&source)?;
+        let _semantic = self.semantic_program(source)?;
         Err(Error::StageNotImplemented(Stage::Semantic))
     }
 }
