@@ -2,8 +2,10 @@ use crate::parser::StructField;
 use crate::{Error, Token, TokenKind};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
+/// User-defined type syntax before semantic resolution.
 pub struct UserTypeDeclaration {
     pub name: String,
+    pub parameters: Vec<String>,
     pub definition: UserTypeDefinition,
 }
 
@@ -41,11 +43,13 @@ impl<'a> Parser<'a> {
     fn parse_type(&mut self) -> Result<UserTypeDeclaration, Error> {
         self.expect(TokenKind::Type)?;
         let name = self.expect_identifier("expected user-defined type name")?;
+        let parameters = self.parse_parameters()?;
 
         let definition = if self.peek() == Some(&TokenKind::Struct) {
             self.advance();
             UserTypeDefinition::Struct(self.parse_struct_fields()?)
         } else {
+            self.consume(TokenKind::EqualSign);
             UserTypeDefinition::Alias(self.parse_alias_tokens())
         };
 
@@ -53,7 +57,35 @@ impl<'a> Parser<'a> {
             return Err(self.error("expected user-defined type definition"));
         }
 
-        Ok(UserTypeDeclaration { name, definition })
+        Ok(UserTypeDeclaration {
+            name,
+            parameters,
+            definition,
+        })
+    }
+
+    fn parse_parameters(&mut self) -> Result<Vec<String>, Error> {
+        if self.peek() != Some(&TokenKind::DoubleColon) {
+            return Ok(Vec::new());
+        }
+
+        self.advance();
+        self.expect(TokenKind::OpenAngle)?;
+        let mut parameters = Vec::new();
+        loop {
+            let name = self.expect_identifier("expected type parameter name")?;
+            parameters.push(name);
+            if self.peek() == Some(&TokenKind::Comma) {
+                self.advance();
+                continue;
+            }
+            self.expect(TokenKind::CloseAngle)?;
+            break;
+        }
+        if parameters.is_empty() {
+            return Err(self.error("type parameter list requires at least one parameter"));
+        }
+        Ok(parameters)
     }
 
     fn parse_struct_fields(&mut self) -> Result<Vec<StructField>, Error> {
@@ -103,8 +135,8 @@ impl<'a> Parser<'a> {
                 break;
             }
             match kind {
-                TokenKind::Less | TokenKind::OpenAngle => angle_depth += 1,
-                TokenKind::Greater | TokenKind::CloseAngle if angle_depth > 0 => angle_depth -= 1,
+                TokenKind::OpenAngle => angle_depth += 1,
+                TokenKind::CloseAngle if angle_depth > 0 => angle_depth -= 1,
                 _ => {}
             }
             self.advance();
@@ -154,6 +186,12 @@ impl<'a> Parser<'a> {
         }
     }
 
+    fn consume(&mut self, kind: TokenKind) {
+        if self.peek() == Some(&kind) {
+            self.advance();
+        }
+    }
+
     fn peek(&self) -> Option<&TokenKind> {
         self.tokens.get(self.position).map(Token::kind)
     }
@@ -189,9 +227,30 @@ mod tests {
         let types = parse_user_types(&tokens).unwrap();
         assert_eq!(types.len(), 1);
         assert_eq!(types[0].name, "Point");
+        assert!(types[0].parameters.is_empty());
         assert_eq!(
             types[0].definition,
             UserTypeDefinition::Alias(vec![TokenKind::Identifier("i64".into())])
+        );
+    }
+
+    #[test]
+    fn parses_parameterized_alias() {
+        let tokens = tokenize("type Result::<T, E> = Union:<T, E>").unwrap();
+        let types = parse_user_types(&tokens).unwrap();
+        assert_eq!(types[0].name, "Result");
+        assert_eq!(types[0].parameters, vec!["T", "E"]);
+        assert_eq!(
+            types[0].definition,
+            UserTypeDefinition::Alias(vec![
+                TokenKind::Identifier("Union".into()),
+                TokenKind::Colon,
+                TokenKind::OpenAngle,
+                TokenKind::Identifier("T".into()),
+                TokenKind::Comma,
+                TokenKind::Identifier("E".into()),
+                TokenKind::CloseAngle,
+            ])
         );
     }
 
@@ -201,6 +260,7 @@ mod tests {
         let types = parse_user_types(&tokens).unwrap();
         assert_eq!(types.len(), 1);
         assert_eq!(types[0].name, "Node");
+        assert!(types[0].parameters.is_empty());
         match &types[0].definition {
             UserTypeDefinition::Struct(fields) => {
                 assert_eq!(fields.len(), 2);
@@ -224,21 +284,13 @@ mod tests {
     fn rejects_missing_definition() {
         let tokens = tokenize("type Point").unwrap();
         let error = parse_user_types(&tokens).unwrap_err();
-        assert!(
-            error
-                .to_string()
-                .contains("expected user-defined type definition")
-        );
+        assert!(error.to_string().contains("expected user-defined type definition"));
     }
 
     #[test]
     fn rejects_missing_struct_field_type() {
         let tokens = tokenize("type Node struct { value }").unwrap();
         let error = parse_user_types(&tokens).unwrap_err();
-        assert!(
-            error
-                .to_string()
-                .contains("expected user-defined struct field type")
-        );
+        assert!(error.to_string().contains("expected user-defined struct field type"));
     }
 }
