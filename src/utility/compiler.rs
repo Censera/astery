@@ -65,17 +65,20 @@ impl Compiler {
     }
 
     pub fn parse_program(&self, source: &Source) -> Result<Program, Error> {
-        let normalized = parser_contract::normalize_function_return_types(source.text())
+        let tokens = parser_contract::normalize_function_return_tokens(source.text())
             .map_err(|error| error.with_source(source.name()))?;
-        let tokens = tokenize(&normalized).map_err(|error| error.with_source(source.name()))?;
         let expanded = macro_expand::expand_macros(&tokens)
             .map_err(|error| error.with_source(source.name()))?;
         parse_program(&expanded).map_err(|error| error.with_source(source.name()))
     }
 
     fn semantic_program(&self, source: Source) -> Result<SemanticProgram, Error> {
-        let program = self.parse_program(&source)?;
-        Ok(SemanticProgram::new(source, program))
+        let tokens = parser_contract::normalize_function_return_tokens(source.text())
+            .map_err(|error| error.with_source(source.name()))?;
+        let expanded = macro_expand::expand_macros(&tokens)
+            .map_err(|error| error.with_source(source.name()))?;
+        let program = parse_program(&expanded).map_err(|error| error.with_source(source.name()))?;
+        Ok(SemanticProgram::new(source, program, expanded))
     }
 
     pub fn parse_imports(&self, source: &Source) -> Result<Vec<Import>, Error> {
@@ -94,9 +97,8 @@ impl Compiler {
     }
 
     pub fn parse_intos(&self, source: &Source) -> Result<Vec<IntoImplementation>, Error> {
-        let normalized = parser_contract::normalize_function_return_types(source.text())
+        let tokens = parser_contract::normalize_function_return_tokens(source.text())
             .map_err(|error| error.with_source(source.name()))?;
-        let tokens = tokenize(&normalized).map_err(|error| error.with_source(source.name()))?;
         parse_intos(&tokens).map_err(|error| error.with_source(source.name()))
     }
 
@@ -140,9 +142,8 @@ impl Compiler {
     }
 
     pub fn parse_functions(&self, source: &Source) -> Result<Vec<FunctionDeclaration>, Error> {
-        let normalized = parser_contract::normalize_function_return_types(source.text())
+        let tokens = parser_contract::normalize_function_return_tokens(source.text())
             .map_err(|error| error.with_source(source.name()))?;
-        let tokens = tokenize(&normalized).map_err(|error| error.with_source(source.name()))?;
         parse_functions(&tokens).map_err(|error| error.with_source(source.name()))
     }
 
