@@ -319,8 +319,11 @@ mod tests {
             .parse_program(&Source::new("main.as", "fn main() { return ) }"))
             .unwrap_err();
         match error {
-            Error::Parse { line, column, .. } => assert_eq!((line, column), (1, 20)),
-            other => panic!("expected parse error, got {other:?}"),
+            Error::WithSource { error, .. } => match *error {
+                Error::Parse { line, column, .. } => assert_eq!((line, column), (1, 20)),
+                other => panic!("expected parse error, got {other:?}"),
+            },
+            other => panic!("expected source-wrapped parse error, got {other:?}"),
         }
     }
 
