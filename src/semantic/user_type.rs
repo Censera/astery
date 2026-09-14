@@ -247,8 +247,7 @@ mod tests {
             types[0].definition,
             UserTypeDefinition::Alias(vec![
                 TokenKind::Identifier("Union".into()),
-                TokenKind::Colon,
-                TokenKind::Less,
+                TokenKind::BitNot,
                 TokenKind::Identifier("T".into()),
                 TokenKind::Comma,
                 TokenKind::Identifier("E".into()),
