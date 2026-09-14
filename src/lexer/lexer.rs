@@ -323,14 +323,25 @@ impl<'src> Lexer<'src> {
         while self.peek().is_some_and(|byte| byte.is_ascii_digit()) {
             value.push(self.advance().expect("peeked byte must exist") as char);
         }
-        if self.peek() == Some(b'.') && self.peek_next().is_some_and(|byte| byte.is_ascii_digit()) {
+
+        let is_float = self.peek() == Some(b'.') && self.peek_next().is_some_and(|byte| byte.is_ascii_digit());
+        if is_float {
             value.push(self.advance().expect("peeked byte must exist") as char);
             while self.peek().is_some_and(|byte| byte.is_ascii_digit()) {
                 value.push(self.advance().expect("peeked byte must exist") as char);
             }
-            return Ok(Token::new(TokenKind::Float(value), line, column));
         }
-        Ok(Token::new(TokenKind::Integer(value), line, column))
+
+        if self.peek().is_some_and(|byte| is_identifier_start(byte) || byte == b'.') {
+            return Err(self.lex_error(line, column, "invalid numeric literal"));
+        }
+
+        let kind = if is_float {
+            TokenKind::Float(value)
+        } else {
+            TokenKind::Integer(value)
+        };
+        Ok(Token::new(kind, line, column))
     }
 
     fn string(&mut self, line: usize, column: usize) -> Result<Token, crate::Error> {
