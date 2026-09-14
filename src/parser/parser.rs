@@ -963,6 +963,27 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_primary_expression(&mut self) -> Result<Expression, Error> {
+        let valid_start = matches!(
+            self.peek_kind(),
+            Some(
+                TokenKind::Integer(_)
+                    | TokenKind::Float(_)
+                    | TokenKind::String(_)
+                    | TokenKind::Character(_)
+                    | TokenKind::True
+                    | TokenKind::False
+                    | TokenKind::None
+                    | TokenKind::Identifier(_)
+                    | TokenKind::Ampersand
+                    | TokenKind::OpenBracket
+                    | TokenKind::Less
+                    | TokenKind::OpenParen
+            )
+        );
+        if self.peek_kind().is_some() && !valid_start {
+            return Err(self.error("expected expression"));
+        }
+
         match self.advance() {
             Some(TokenKind::Integer(value)) => Ok(Expression::Integer(value)),
             Some(TokenKind::Float(value)) => Ok(Expression::Float(value)),
@@ -978,7 +999,7 @@ impl<'a> Parser<'a> {
             Some(TokenKind::OpenBracket) => self.parse_array(),
             Some(TokenKind::Less) => self.parse_vector(),
             Some(TokenKind::OpenParen) => self.parse_parenthesized(),
-            Some(_) => Err(self.error("expected expression")),
+            Some(_) => unreachable!("expression start was validated before advancing"),
             None => Err(self.error("expected expression")),
         }
     }
