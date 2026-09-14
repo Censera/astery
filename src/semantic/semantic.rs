@@ -1,6 +1,7 @@
 use crate::Token;
 use crate::compiler::{Program, Source};
 use crate::error::Error;
+use crate::parser::ImportItem;
 use crate::span::{SourceSpan, Spanned};
 
 /// Semantic analysis owns the source, the complete parser program, and the
@@ -23,14 +24,69 @@ use crate::span::{SourceSpan, Spanned};
 #[derive(Debug)]
 pub(crate) struct SemanticProgram {
     pub(crate) source: Source,
+    pub(crate) module: SemanticModule,
     pub(crate) program: Program,
     pub(crate) tokens: Vec<Token>,
 }
 
+/// The root module and imports belonging to one parsed source unit.
+#[derive(Debug)]
+pub(crate) struct SemanticModule {
+    pub(crate) name: Option<String>,
+    pub(crate) imports: Vec<SemanticImport>,
+}
+
+#[derive(Debug)]
+pub(crate) struct SemanticImport {
+    pub(crate) module: Option<String>,
+    pub(crate) items: Vec<SemanticImportItem>,
+}
+
+#[derive(Debug)]
+pub(crate) struct SemanticImportItem {
+    pub(crate) name: String,
+    pub(crate) items: Vec<SemanticImportItem>,
+}
+
+impl SemanticModule {
+    pub(crate) fn from_program(program: &Program) -> Self {
+        Self {
+            name: program.module.as_ref().map(|module| module.name.clone()),
+            imports: program
+                .imports
+                .iter()
+                .map(|import| SemanticImport {
+                    module: import.module.clone(),
+                    items: import
+                        .items
+                        .iter()
+                        .map(SemanticImportItem::from_parser)
+                        .collect(),
+                })
+                .collect(),
+        }
+    }
+}
+
+impl SemanticImportItem {
+    fn from_parser(item: &ImportItem) -> Self {
+        Self {
+            name: item.name.clone(),
+            items: item
+                .items
+                .iter()
+                .map(Self::from_parser)
+                .collect(),
+        }
+    }
+}
+
 impl SemanticProgram {
     pub(crate) fn new(source: Source, program: Program, tokens: Vec<Token>) -> Self {
+        let module = SemanticModule::from_program(&program);
         Self {
             source,
+            module,
             program,
             tokens,
         }
