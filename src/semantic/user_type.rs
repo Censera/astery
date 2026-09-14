@@ -70,7 +70,10 @@ impl<'a> Parser<'a> {
         }
 
         self.advance();
-        self.expect(TokenKind::OpenAngle)?;
+        if !matches!(self.peek(), Some(TokenKind::OpenAngle | TokenKind::Less)) {
+            return Err(self.error("expected `<` after type name"));
+        }
+        self.advance();
         let mut parameters = Vec::new();
         loop {
             let name = self.expect_identifier("expected type parameter name")?;
@@ -79,11 +82,11 @@ impl<'a> Parser<'a> {
                 self.advance();
                 continue;
             }
-            self.expect(TokenKind::CloseAngle)?;
+            if !matches!(self.peek(), Some(TokenKind::CloseAngle | TokenKind::Greater)) {
+                return Err(self.error("expected `>` after type parameters"));
+            }
+            self.advance();
             break;
-        }
-        if parameters.is_empty() {
-            return Err(self.error("type parameter list requires at least one parameter"));
         }
         Ok(parameters)
     }
@@ -135,8 +138,8 @@ impl<'a> Parser<'a> {
                 break;
             }
             match kind {
-                TokenKind::OpenAngle => angle_depth += 1,
-                TokenKind::CloseAngle if angle_depth > 0 => angle_depth -= 1,
+                TokenKind::OpenAngle | TokenKind::Less => angle_depth += 1,
+                TokenKind::CloseAngle | TokenKind::Greater if angle_depth > 0 => angle_depth -= 1,
                 _ => {}
             }
             self.advance();
@@ -245,11 +248,11 @@ mod tests {
             UserTypeDefinition::Alias(vec![
                 TokenKind::Identifier("Union".into()),
                 TokenKind::Colon,
-                TokenKind::OpenAngle,
+                TokenKind::Less,
                 TokenKind::Identifier("T".into()),
                 TokenKind::Comma,
                 TokenKind::Identifier("E".into()),
-                TokenKind::CloseAngle,
+                TokenKind::Greater,
             ])
         );
     }
