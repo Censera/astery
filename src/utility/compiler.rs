@@ -47,6 +47,76 @@ impl Source {
     }
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Sources {
+    sources: Vec<Source>,
+}
+
+impl Sources {
+    pub fn new(sources: impl IntoIterator<Item = Source>) -> Result<Self, Error> {
+        let mut result = Self { sources: Vec::new() };
+        for source in sources {
+            result.push(source)?;
+        }
+        Ok(result)
+    }
+
+    pub fn single(source: Source) -> Self {
+        Self {
+            sources: vec![source],
+        }
+    }
+
+    pub fn push(&mut self, source: Source) -> Result<(), Error> {
+        if self.sources.iter().any(|existing| existing.name() == source.name()) {
+            return Err(Error::InvalidOptions(format!(
+                "duplicate source unit `{}`",
+                source.name()
+            )));
+        }
+        self.sources.push(source);
+        Ok(())
+    }
+
+    pub fn as_slice(&self) -> &[Source] {
+        &self.sources
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum Target {
+    Native,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum Output {
+    Executable,
+    Object,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct CompilerOptions {
+    pub target: Target,
+    pub output: Output,
+}
+
+impl Default for CompilerOptions {
+    fn default() -> Self {
+        Self {
+            target: Target::Native,
+            output: Output::Executable,
+        }
+    }
+}
+
+impl CompilerOptions {
+    pub fn validate(&self) -> Result<(), Error> {
+        match self.target {
+            Target::Native => Ok(()),
+        }
+    }
+}
+
 #[derive(Debug, Default)]
 pub struct Compiler;
 
@@ -59,12 +129,12 @@ impl Compiler {
         tokenize(source.text()).map_err(|error| error.with_source(source.name()))
     }
 
-    pub fn parse_module(&self, source: &Source) -> Result<ModuleDeclaration, Error> {
+    pub(crate) fn parse_module(&self, source: &Source) -> Result<ModuleDeclaration, Error> {
         let tokens = self.tokenize(source)?;
         parse_module(&tokens).map_err(|error| error.with_source(source.name()))
     }
 
-    pub fn parse_program(&self, source: &Source) -> Result<Program, Error> {
+    pub(crate) fn parse_program(&self, source: &Source) -> Result<Program, Error> {
         let tokens = parser_contract::normalize_function_return_tokens(source.text())
             .map_err(|error| error.with_source(source.name()))?;
         let expanded = macro_expand::expand_macros(&tokens)
@@ -81,73 +151,73 @@ impl Compiler {
         Ok(SemanticProgram::new(source, program, expanded))
     }
 
-    pub fn parse_imports(&self, source: &Source) -> Result<Vec<Import>, Error> {
+    pub(crate) fn parse_imports(&self, source: &Source) -> Result<Vec<Import>, Error> {
         let tokens = self.tokenize(source)?;
         parse_imports(&tokens).map_err(|error| error.with_source(source.name()))
     }
 
-    pub fn parse_enums(&self, source: &Source) -> Result<Vec<EnumDeclaration>, Error> {
+    pub(crate) fn parse_enums(&self, source: &Source) -> Result<Vec<EnumDeclaration>, Error> {
         let tokens = self.tokenize(source)?;
         parse_enums(&tokens).map_err(|error| error.with_source(source.name()))
     }
 
-    pub fn parse_structs(&self, source: &Source) -> Result<Vec<StructDeclaration>, Error> {
+    pub(crate) fn parse_structs(&self, source: &Source) -> Result<Vec<StructDeclaration>, Error> {
         let tokens = self.tokenize(source)?;
         parse_structs(&tokens).map_err(|error| error.with_source(source.name()))
     }
 
-    pub fn parse_intos(&self, source: &Source) -> Result<Vec<IntoImplementation>, Error> {
+    pub(crate) fn parse_intos(&self, source: &Source) -> Result<Vec<IntoImplementation>, Error> {
         let tokens = parser_contract::normalize_function_return_tokens(source.text())
             .map_err(|error| error.with_source(source.name()))?;
         parse_intos(&tokens).map_err(|error| error.with_source(source.name()))
     }
 
-    pub fn parse_user_types(&self, source: &Source) -> Result<Vec<UserTypeDeclaration>, Error> {
+    pub(crate) fn parse_user_types(&self, source: &Source) -> Result<Vec<UserTypeDeclaration>, Error> {
         let tokens = self.tokenize(source)?;
         parse_user_types(&tokens).map_err(|error| error.with_source(source.name()))
     }
 
-    pub fn parse_cast(&self, source: &Source) -> Result<CastExpression, Error> {
+    pub(crate) fn parse_cast(&self, source: &Source) -> Result<CastExpression, Error> {
         let tokens = self.tokenize(source)?;
         parse_cast(&tokens).map_err(|error| error.with_source(source.name()))
     }
 
-    pub fn parse_pointer_type(&self, source: &Source) -> Result<PointerType, Error> {
+    pub(crate) fn parse_pointer_type(&self, source: &Source) -> Result<PointerType, Error> {
         let tokens = self.tokenize(source)?;
         parse_pointer_type(&tokens).map_err(|error| error.with_source(source.name()))
     }
 
-    pub fn parse_address_of(&self, source: &Source) -> Result<AddressOfExpression, Error> {
+    pub(crate) fn parse_address_of(&self, source: &Source) -> Result<AddressOfExpression, Error> {
         let tokens = self.tokenize(source)?;
         parse_address_of(&tokens).map_err(|error| error.with_source(source.name()))
     }
 
-    pub fn parse_embedded_blocks(&self, source: &Source) -> Result<Vec<EmbeddedBlock>, Error> {
+    pub(crate) fn parse_embedded_blocks(&self, source: &Source) -> Result<Vec<EmbeddedBlock>, Error> {
         parse_embedded_blocks(source.text()).map_err(|error| error.with_source(source.name()))
     }
 
-    pub fn parse_macros(&self, source: &Source) -> Result<Vec<MacroDeclaration>, Error> {
+    pub(crate) fn parse_macros(&self, source: &Source) -> Result<Vec<MacroDeclaration>, Error> {
         let tokens = self.tokenize(source)?;
         parse_macros(&tokens).map_err(|error| error.with_source(source.name()))
     }
 
-    pub fn parse_macro_call(&self, source: &Source) -> Result<MacroCall, Error> {
+    pub(crate) fn parse_macro_call(&self, source: &Source) -> Result<MacroCall, Error> {
         let tokens = self.tokenize(source)?;
         parse_macro_call(&tokens).map_err(|error| error.with_source(source.name()))
     }
 
-    pub fn parse_bindings(&self, source: &Source) -> Result<Vec<BindingDeclaration>, Error> {
+    pub(crate) fn parse_bindings(&self, source: &Source) -> Result<Vec<BindingDeclaration>, Error> {
         let tokens = self.tokenize(source)?;
         parse_bindings(&tokens).map_err(|error| error.with_source(source.name()))
     }
 
-    pub fn parse_functions(&self, source: &Source) -> Result<Vec<FunctionDeclaration>, Error> {
+    pub(crate) fn parse_functions(&self, source: &Source) -> Result<Vec<FunctionDeclaration>, Error> {
         let tokens = parser_contract::normalize_function_return_tokens(source.text())
             .map_err(|error| error.with_source(source.name()))?;
         parse_functions(&tokens).map_err(|error| error.with_source(source.name()))
     }
 
-    pub fn validate_type(&self, source: &Source) -> Result<(), Error> {
+    pub(crate) fn validate_type(&self, source: &Source) -> Result<(), Error> {
         let tokens = self.tokenize(source)?;
         let kinds = tokens.iter().map(Token::kind).cloned().collect::<Vec<_>>();
         type_syntax::parse(&kinds).map(|_| ()).map_err(|message| {
@@ -161,7 +231,18 @@ impl Compiler {
     }
 
     pub fn compile(&self, source: Source) -> Result<(), Error> {
-        let _semantic = self.semantic_program(source)?;
+        self.compile_with_options(Sources::single(source), CompilerOptions::default())
+    }
+
+    pub fn compile_with_options(
+        &self,
+        sources: Sources,
+        options: CompilerOptions,
+    ) -> Result<(), Error> {
+        options.validate()?;
+        for source in sources.as_slice() {
+            self.semantic_program(source.clone())?;
+        }
         Err(Error::StageNotImplemented(Stage::Semantic))
     }
 }
