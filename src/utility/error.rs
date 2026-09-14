@@ -17,6 +17,8 @@ pub enum Stage {
 #[derive(Debug)]
 pub enum Error {
     Io(std::io::Error),
+    InvalidOptions(String),
+    UnsupportedTarget(String),
     Lex {
         line: usize,
         column: usize,
@@ -31,6 +33,7 @@ pub enum Error {
         span: SourceSpan,
         message: String,
     },
+    Backend(String),
     WithSource {
         source: String,
         error: Box<Error>,
@@ -41,10 +44,11 @@ pub enum Error {
 impl Error {
     pub fn stage(&self) -> Option<Stage> {
         match self {
-            Self::Io(_) => None,
+            Self::Io(_) | Self::InvalidOptions(_) | Self::UnsupportedTarget(_) => None,
             Self::Lex { .. } => Some(Stage::Lexer),
             Self::Parse { .. } => Some(Stage::Parser),
             Self::Semantic { .. } => Some(Stage::Semantic),
+            Self::Backend(_) => Some(Stage::Backend),
             Self::WithSource { error, .. } => error.stage(),
             Self::StageNotImplemented(stage) => Some(*stage),
         }
@@ -115,6 +119,9 @@ impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::Io(error) => write!(f, "I/O error: {error}"),
+            Self::InvalidOptions(message) => write!(f, "invalid compiler options: {message}"),
+            Self::UnsupportedTarget(target) => write!(f, "unsupported target: {target}"),
+            Self::Backend(message) => write!(f, "backend error: {message}"),
             Self::WithSource { source, error } => {
                 match error.diagnostic() {
                     Some(Diagnostic::Point {
