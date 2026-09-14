@@ -13,7 +13,7 @@ categories = ["command-line-utilities", "development-tools::compilers"]
 
 [[bin]]
 name = "astery"
-path = "src/cli/main.rs"
+path = "src/entry/main.rs"
 
 [dependencies]
 an-inkwell = "26"
