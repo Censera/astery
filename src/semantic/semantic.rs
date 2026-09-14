@@ -4,6 +4,8 @@ use crate::lexer::Token;
 use crate::parser::ImportItem;
 use crate::span::{SourceSpan, Spanned};
 
+mod type_syntax;
+
 /// Semantic analysis owns the source, the complete parser program, and the
 /// macro-expanded token stream that produced that program.
 ///
