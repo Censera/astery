@@ -615,7 +615,7 @@ fn keyword(value: &str) -> TokenKind {
         "and" => TokenKind::And,
         "or" => TokenKind::Or,
         "xor" => TokenKind::Xor,
-        "not" => TokenKind::Not,
+        "not" => TokenKind::Exclamation,
         _ => TokenKind::Identifier(value.to_owned()),
     }
 }
