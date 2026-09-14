@@ -21,10 +21,11 @@ impl From<Visibility> for SemanticVisibility {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) enum CompilerAttribute {
     Striped,
     Lossely,
+    Unknown(String),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
@@ -36,10 +37,10 @@ impl SemanticFunctionAttributes {
     pub(crate) fn from_flags(flags: &[String]) -> Self {
         let compiler = flags
             .iter()
-            .filter_map(|flag| match flag.as_str() {
-                "striped" => Some(CompilerAttribute::Striped),
-                "lossely" => Some(CompilerAttribute::Lossely),
-                _ => None,
+            .map(|flag| match flag.as_str() {
+                "striped" => CompilerAttribute::Striped,
+                "lossely" => CompilerAttribute::Lossely,
+                _ => CompilerAttribute::Unknown(flag.clone()),
             })
             .collect();
         Self { compiler }
@@ -186,5 +187,37 @@ impl SemanticProgram {
     ) -> Option<Error> {
         self.span_for_range(start, end)
             .map(|span| self.semantic_error(span, message))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{CompilerAttribute, SemanticFunctionAttributes, SemanticVisibility};
+    use crate::parser::Visibility;
+
+    #[test]
+    fn lowers_visibility() {
+        assert_eq!(
+            SemanticVisibility::from(Visibility::Public),
+            SemanticVisibility::Public
+        );
+        assert_eq!(
+            SemanticVisibility::from(Visibility::Private),
+            SemanticVisibility::Private
+        );
+    }
+
+    #[test]
+    fn preserves_known_and_unknown_function_flags() {
+        let flags = vec!["striped".into(), "lossely".into(), "custom".into()];
+        let attributes = SemanticFunctionAttributes::from_flags(&flags);
+        assert_eq!(
+            attributes.compiler,
+            vec![
+                CompilerAttribute::Striped,
+                CompilerAttribute::Lossely,
+                CompilerAttribute::Unknown("custom".into()),
+            ]
+        );
     }
 }
