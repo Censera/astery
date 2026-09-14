@@ -32,11 +32,11 @@ The syntax document is authoritative for language spelling and surface behavior.
 - [x] Tokenize macro syntax.
 - [x] Tokenize embedded C blocks.
 - [x] Tokenize union type syntax.
-- [ ] Validate all lexical escape sequences required by the language.
-- [ ] Validate unterminated strings, characters, comments, and embedded blocks with precise locations.
-- [ ] Define numeric literal lexical rules and reject malformed forms deterministically.
-- [ ] Preserve sufficient source information for every token used by diagnostics.
-- [ ] Keep lexer errors independent from parser and semantic errors.
+- [x] Validate all lexical escape sequences required by the language.
+- [x] Validate unterminated strings, characters, comments, and embedded blocks with precise locations.
+- [x] Define numeric literal lexical rules and reject malformed forms deterministically.
+- [x] Preserve sufficient source information for every token used by diagnostics.
+- [x] Keep lexer errors independent from parser and semantic errors.
 
 ## Parser
 
