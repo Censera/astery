@@ -59,12 +59,12 @@ The syntax document is authoritative for language spelling and surface behavior.
 - [x] Parse casts and pointers.
 - [x] Parse embedded C blocks.
 - [x] Parse macros and macro calls.
-- [ ] Validate parser rejection cases for every grammar branch rather than relying only on successful examples.
-- [ ] Ensure malformed nesting and delimiter errors point at the smallest useful parser location.
-- [ ] Ensure parser precedence and associativity exactly match the syntax specification.
-- [ ] Ensure all expression forms have unambiguous parsing when syntax overlaps, especially calls, member access, vectors, ranges, casts, and shortened conditionals.
-- [ ] Ensure parser recovery does not produce misleading AST structures when recovery is used.
-- [ ] Keep parser-only syntax details out of semantic structures when they have no later use.
+- [x] Validate parser rejection cases for every grammar branch rather than relying only on successful examples.
+- [x] Ensure malformed nesting and delimiter errors point at the smallest useful parser location.
+- [x] Ensure parser precedence and associativity exactly match the syntax specification.
+- [x] Ensure all expression forms have unambiguous parsing when syntax overlaps, especially calls, member access, vectors, ranges, casts, and shortened conditionals.
+- [x] Ensure parser recovery does not produce misleading AST structures when recovery is used.
+- [x] Keep parser-only syntax details out of semantic structures when they have no later use.
 
 ## Parser to semantic boundary
 
