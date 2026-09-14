@@ -111,7 +111,7 @@ pub enum TokenKind {
     // ~~
     Xor,
     // !
-    Not,
+    Exclamation,
     // :&
     BitAnd,
     // :|
