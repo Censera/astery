@@ -292,6 +292,90 @@ mod tests {
         assert_eq!(program.functions.len(), 1);
     }
 
+    #[test]
+    fn parser_rejection_matrix_reports_parse_errors() {
+        let compiler = Compiler::new();
+        for source in [
+            "fn main() {",
+            "fn main() { [1, 2;",
+            "fn main() { <1, 2;",
+            "fn main() { (1, 2;",
+            "fn main() { value(1, 2;",
+            "fn main() { match value { item { },",
+            "use { math, memory",
+        ] {
+            let error = compiler.parse_program(&Source::new("main.as", source)).unwrap_err();
+            assert_eq!(error.stage(), Some(Stage::Parser));
+        }
+    }
+
+    #[test]
+    fn parser_errors_point_at_the_current_unexpected_token() {
+        let compiler = Compiler::new();
+        let error = compiler
+            .parse_program(&Source::new("main.as", "fn main() { return ) }"))
+            .unwrap_err();
+        match error {
+            Error::Parse { line, column, .. } => assert_eq!((line, column), (1, 20)),
+            other => panic!("expected parse error, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn parser_expression_precedence_and_associativity_are_stable() {
+        let compiler = Compiler::new();
+        let program = compiler
+            .parse_program(&Source::new("main.as", "fn main() { 1 + 2 * 3 - 4; 10 - 3 - 2; }"))
+            .unwrap();
+        let statements = &program.functions[0].body.statements;
+        assert!(matches!(
+            &statements[0],
+            Statement::Expression(Expression::Binary { operator: BinaryOperator::Subtract, left, right })
+                if matches!(right.as_ref(), Expression::Integer(value) if value == "4")
+                    && matches!(left.as_ref(), Expression::Binary { operator: BinaryOperator::Add, left, right }
+                        if matches!(left.as_ref(), Expression::Integer(value) if value == "1")
+                            && matches!(right.as_ref(), Expression::Binary { operator: BinaryOperator::Multiply, .. }))
+        ));
+        assert!(matches!(
+            &statements[1],
+            Statement::Expression(Expression::Binary { operator: BinaryOperator::Subtract, left, right })
+                if matches!(left.as_ref(), Expression::Binary { operator: BinaryOperator::Subtract, .. })
+                    && matches!(right.as_ref(), Expression::Integer(value) if value == "2")
+        ));
+    }
+
+    #[test]
+    fn parser_keeps_postfix_range_and_cast_forms_unambiguous() {
+        let compiler = Compiler::new();
+        let program = compiler
+            .parse_program(&Source::new(
+                "main.as",
+                "fn main() { value.field(1); value -> i8 -> char; 1..3; <1 < 2, 3>; }",
+            ))
+            .unwrap();
+        let statements = &program.functions[0].body.statements;
+        assert!(matches!(
+            &statements[0],
+            Statement::Expression(Expression::Call { function, .. })
+                if matches!(function.as_ref(), Expression::Member { .. })
+        ));
+        assert!(matches!(
+            &statements[1],
+            Statement::Expression(Expression::Cast { value, target_type })
+                if target_type == &vec![TokenKind::Identifier("char".into())]
+                    && matches!(value.as_ref(), Expression::Cast { .. })
+        ));
+        assert!(matches!(
+            &statements[2],
+            Statement::Expression(Expression::Range { inclusive: false, .. })
+        ));
+        assert!(matches!(
+            &statements[3],
+            Statement::Expression(Expression::Vector(values))
+                if matches!(&values[0], Expression::Binary { operator: BinaryOperator::Less, .. })
+        ));
+    }
+
     #[allow(dead_code)]
     fn _keep_parser_types_reachable_for_tests(
         _: BinaryOperator,
