@@ -30,9 +30,55 @@ Source
   -> AST
   -> Semantic analysis
   -> Backend
+  -> Output
 ```
 
 A stage should expose the information required by the next stage and nothing more.
+
+## Foundation contract
+
+`Source` owns one source unit's name and text. It is immutable after construction. `Sources` owns the ordered set of related source units and rejects duplicate source names.
+
+A compilation is therefore either one `Source` through `Compiler::compile` or an explicit `Sources` collection through `Compiler::compile_with_options`. Source order is the order supplied by the caller. The compiler must not depend on filesystem enumeration order.
+
+The semantic stage receives parsed source units in that deterministic order. It is responsible for constructing the module graph from each source unit's `mod` declaration and imports. A source unit has one root module. Module names are unique within a compilation unit, and later semantic work must reject conflicts rather than choose one arbitrarily.
+
+The ownership boundary is:
+
+```text
+Source / Sources
+    owned by compiler input
+        |
+        v
+Tokens
+    owned by lexer result
+        |
+        v
+AST / Program
+    owned by parser result
+        |
+        v
+SemanticProgram / module graph / resolved symbols and types
+    owned by semantic analysis
+        |
+        v
+Backend IR objects
+    owned by backend and LLVM context
+        |
+        v
+Emitted output
+    owned by the output operation / caller
+```
+
+Later stages must not re-read source files to recover information that an earlier stage already owns. Source text may remain available for diagnostics, but semantic and backend work must consume structured data rather than reparsing source text.
+
+The public compiler surface consists of source input, compiler options, and compilation entry points. Parser helper operations remain crate-internal. The lexer/parser data types may remain publicly reachable because they are language representation types, but they are not the primary compiler control API.
+
+Compiler options are deliberately concrete rather than framework-driven. v26 currently defines `Target::Native` and `Output::{Executable,Object}`. Options are validated before compilation. Adding another option requires a concrete compiler need.
+
+The compiler has explicit failure classes. Missing or unreadable files use `Error::Io`. Invalid compiler configuration uses `Error::InvalidOptions`. Targets that the backend cannot support use `Error::UnsupportedTarget`. Lexical, parser, semantic, and backend failures retain their respective stage. No failure is silently recovered from.
+
+Diagnostics and emitted symbols must be deterministic. Within a compilation unit, source units, module declarations, declarations discovered from them, diagnostics, and emitted symbols are processed in stable source/declaration order unless a later backend rule explicitly requires another documented order.
 
 ## Ownership
 
