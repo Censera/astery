@@ -1,5 +1,6 @@
 use crate::Token;
 use crate::compiler::{Program, Source};
+use crate::error::Error;
 use crate::span::{SourceSpan, Spanned};
 
 /// Semantic analysis input retains the parser program and expanded token stream.
@@ -55,8 +56,30 @@ impl SemanticProgram {
         Some(SourceSpan::covering(first.span().start, last.span().end))
     }
 
-    pub(crate) fn source_span(&self, line: usize, column: usize) -> SourceSpan {
-        let location = crate::span::SourceLocation::new(line, column);
-        SourceSpan::point(location)
+    pub(crate) fn semantic_error(
+        &self,
+        span: SourceSpan,
+        message: impl Into<String>,
+    ) -> Error {
+        Error::semantic(span, message)
+    }
+
+    pub(crate) fn semantic_error_at_token(
+        &self,
+        index: usize,
+        message: impl Into<String>,
+    ) -> Option<Error> {
+        self.token_span(index)
+            .map(|span| self.semantic_error(span, message))
+    }
+
+    pub(crate) fn semantic_error_for_range(
+        &self,
+        start: usize,
+        end: usize,
+        message: impl Into<String>,
+    ) -> Option<Error> {
+        self.span_for_range(start, end)
+            .map(|span| self.semantic_error(span, message))
     }
 }
