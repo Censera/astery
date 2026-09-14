@@ -10,6 +10,10 @@ impl Token {
         Self { kind, line, column }
     }
 
+    pub(crate) fn synthetic(kind: TokenKind, line: usize, column: usize) -> Self {
+        Self::new(kind, line, column)
+    }
+
     pub fn kind(&self) -> &TokenKind {
         &self.kind
     }
@@ -20,6 +24,10 @@ impl Token {
 
     pub fn column(&self) -> usize {
         self.column
+    }
+
+    pub fn span(&self) -> crate::span::SourceSpan {
+        crate::span::SourceSpan::point(crate::span::SourceLocation::new(self.line, self.column))
     }
 }
 
@@ -359,17 +367,9 @@ impl<'src> Lexer<'src> {
             }
             if self.matches(b'\'') {
                 if value.chars().count() == 1 {
-                    return Ok(Token::new(
-                        TokenKind::Character(value.chars().next().unwrap()),
-                        line,
-                        column,
-                    ));
+                    return Ok(Token::new(TokenKind::Character(value.chars().next().unwrap()), line, column));
                 }
-                return Err(self.lex_error(
-                    line,
-                    column,
-                    "character literal must contain one character",
-                ));
+                return Err(self.lex_error(line, column, "character literal must contain one character"));
             }
             return Ok(Token::new(TokenKind::Label(value), line, column));
         }
@@ -391,11 +391,7 @@ impl<'src> Lexer<'src> {
             Some(b'\\') => Ok('\\'),
             Some(b'"') => Ok('"'),
             Some(b'\'') => Ok('\''),
-            Some(byte) => Err(self.lex_error(
-                line,
-                column,
-                &format!("unknown escape `\\{}`", byte as char),
-            )),
+            Some(byte) => Err(self.lex_error(line, column, &format!("unknown escape `\\{}`", byte as char))),
             None => Err(self.lex_error(line, column, "unterminated escape sequence")),
         }
     }
@@ -503,6 +499,10 @@ fn keyword(value: &str) -> TokenKind {
         "true" => TokenKind::True,
         "false" => TokenKind::False,
         "None" => TokenKind::None,
+        "and" => TokenKind::And,
+        "or" => TokenKind::Or,
+        "xor" => TokenKind::Xor,
+        "not" => TokenKind::Not,
         _ => TokenKind::Identifier(value.to_owned()),
     }
 }

@@ -46,6 +46,53 @@ pub fn normalize_function_return_types(source: &str) -> Result<String, Error> {
     Ok(normalized)
 }
 
+pub fn normalize_function_return_tokens(source: &str) -> Result<Vec<Token>, Error> {
+    let mut tokens = crate::lexer::tokenize(source)?;
+    let mut index = 0;
+
+    while index < tokens.len() {
+        if tokens[index].kind() != &TokenKind::Fn {
+            index += 1;
+            continue;
+        }
+
+        let first = index + 1;
+        if first >= tokens.len() {
+            break;
+        }
+
+        if tokens[first].kind() == &TokenKind::OpenBracket {
+            index = first + 1;
+            continue;
+        }
+
+        let Some(name_index) = find_function_name(&tokens, first) else {
+            index = first;
+            continue;
+        };
+
+        if name_index == first {
+            index = name_index + 1;
+            continue;
+        }
+
+        let start = &tokens[first];
+        let name = &tokens[name_index];
+        tokens.insert(
+            first,
+            Token::synthetic(TokenKind::OpenBracket, start.line(), start.column()),
+        );
+        let close_index = name_index + 1;
+        tokens.insert(
+            close_index,
+            Token::synthetic(TokenKind::CloseBracket, name.line(), name.column()),
+        );
+        index = close_index + 1;
+    }
+
+    Ok(tokens)
+}
+
 fn find_function_name(tokens: &[Token], start: usize) -> Option<usize> {
     let mut index = start;
     while index + 1 < tokens.len() {
