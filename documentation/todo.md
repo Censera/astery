@@ -58,7 +58,7 @@
 
 ### Semantic model and source ownership
 
-- [ ] Define the semantic program representation produced from the parser program.
+- [x] Define the semantic program representation produced from the parser program.
 - [ ] Define source spans for every semantic input that can produce a diagnostic.
 - [ ] Preserve the original source location of declarations, identifiers, type references, literals, operators, expressions, statements, and macro-expanded input.
 - [ ] Make semantic errors point at the smallest useful source span instead of a generic file position.
