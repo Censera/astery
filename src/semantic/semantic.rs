@@ -277,7 +277,7 @@ mod tests {
 
     #[test]
     fn builds_function_signature() {
-        let tokens = tokenize("fn i32 add(a i32, b i32) {}").unwrap();
+        let tokens = tokenize("fn [i32] add(a i32, b i32) {}").unwrap();
         let function = &parse_functions(&tokens).unwrap()[0];
         let signature = SemanticFunctionSignature::from_function(function).unwrap();
         assert_eq!(signature.parameters.len(), 2);
@@ -287,7 +287,7 @@ mod tests {
     #[test]
     fn groups_functions_into_overload_sets() {
         let tokens = tokenize(
-            "fn i32 add(a i32) {} fn f64 add(a f64) {} fn i32 sub(a i32) {}",
+            "fn [i32] add(a i32) {} fn [f64] add(a f64) {} fn [i32] sub(a i32) {}",
         )
         .unwrap();
         let functions = parse_functions(&tokens).unwrap();
