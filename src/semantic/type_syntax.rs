@@ -222,9 +222,9 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_generic_application(&mut self, name: String) -> Result<TypeSyntax, String> {
-        self.expect(TokenKind::OpenAngle, "expected `<` in generic type")?;
+        self.expect_any(&[TokenKind::OpenAngle, TokenKind::Less], "expected `<` in generic type")?;
         let mut arguments = Vec::new();
-        if self.take(TokenKind::CloseAngle) {
+        if self.take_any(&[TokenKind::CloseAngle, TokenKind::Greater]) {
             return Err("generic type requires at least one argument".into());
         }
         loop {
@@ -232,7 +232,7 @@ impl<'a> Parser<'a> {
             if self.take(TokenKind::Comma) {
                 continue;
             }
-            self.expect(TokenKind::CloseAngle, "expected `>` in generic type")?;
+            self.expect_any(&[TokenKind::CloseAngle, TokenKind::Greater], "expected `>` in generic type")?;
             break;
         }
         Ok(TypeSyntax::Generic { name, arguments })
@@ -242,9 +242,9 @@ impl<'a> Parser<'a> {
         if !self.take(TokenKind::DoubleColon) && !self.take(TokenKind::Colon) {
             return Err("expected `::` in union type".into());
         }
-        self.expect(TokenKind::OpenAngle, "expected `<` in union type")?;
+        self.expect_any(&[TokenKind::OpenAngle, TokenKind::Less], "expected `<` in union type")?;
         let mut types = Vec::new();
-        if self.take(TokenKind::CloseAngle) {
+        if self.take_any(&[TokenKind::CloseAngle, TokenKind::Greater]) {
             return Err("union type requires at least one member".into());
         }
         loop {
@@ -252,7 +252,7 @@ impl<'a> Parser<'a> {
             if self.take(TokenKind::Comma) {
                 continue;
             }
-            self.expect(TokenKind::CloseAngle, "expected `>` in union type")?;
+            self.expect_any(&[TokenKind::CloseAngle, TokenKind::Greater], "expected `>` in union type")?;
             break;
         }
         Ok(TypeSyntax::Union(types))
@@ -272,6 +272,23 @@ impl<'a> Parser<'a> {
 
     fn take(&mut self, expected: TokenKind) -> bool {
         if self.peek() == Some(&expected) {
+            self.position += 1;
+            true
+        } else {
+            false
+        }
+    }
+
+    fn expect_any(&mut self, expected: &[TokenKind], message: &str) -> Result<(), String> {
+        if expected.iter().any(|kind| self.take(kind.clone())) {
+            Ok(())
+        } else {
+            Err(message.into())
+        }
+    }
+
+    fn take_any(&mut self, expected: &[TokenKind]) -> bool {
+        if expected.iter().any(|kind| self.peek() == Some(kind)) {
             self.position += 1;
             true
         } else {
