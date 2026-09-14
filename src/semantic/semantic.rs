@@ -30,6 +30,14 @@ pub(crate) struct SemanticProgram {
 }
 
 /// The root module and imports belonging to one parsed source unit.
+///
+/// A module exposes two declaration namespaces: values and types. Functions,
+/// `let` bindings, `const` bindings, and imported value names belong to the
+/// value namespace. Structs, enums, user types, and imported type names belong
+/// to the type namespace. Modules are resolved separately as module paths.
+///
+/// Struct fields, enum variants, and methods are members of their declaring
+/// type rather than declarations in the root value or type namespace.
 #[derive(Debug)]
 pub(crate) struct SemanticModule {
     pub(crate) name: Option<String>,
