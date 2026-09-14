@@ -68,12 +68,12 @@
 ### Modules, imports, and namespaces
 
 - [x] Register the root module for each source unit.
-- [ ] Resolve module paths and imported modules.
-- [ ] Resolve imported names and grouped imports.
-- [ ] Detect missing modules and missing imported items.
 - [ ] Detect duplicate module, import, and namespace declarations where forbidden.
-- [x] Define the namespace rules for functions, bindings, types, enum variants, struct members, and methods.
+- [ ] Resolve module paths and imported modules.
+- [ ] Detect missing modules and missing imported items.
+- [ ] Resolve imported names and grouped imports.
 - [ ] Detect ambiguous names introduced by imports.
+- [x] Define the namespace rules for functions, bindings, types, enum variants, struct members, and methods.
 - [ ] Enforce module visibility across module boundaries.
 
 ### Symbols, scopes, and name resolution
