@@ -33,88 +33,168 @@ impl Token {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum TokenKind {
+    // identifiers and literals
     Identifier(String),
     Integer(String),
     Float(String),
     String(String),
     Character(char),
     Label(String),
+
+    // keywords
+    // mod
     Mod,
+    // use
     Use,
+    // let
     Let,
+    // const
     Const,
+    // fn
     Fn,
+    // return
     Return,
+    // if
     If,
+    // elif
     Elif,
+    // else
     Else,
+    // then
     Then,
+    // break
     Break,
+    // continue
     Continue,
+    // loop
     Loop,
+    // while
     While,
+    // match
     Match,
+    // for
     For,
+    // in
     In,
+    // enum
     Enum,
+    // struct
     Struct,
+    // into
     Into,
+    // pub
     Pub,
+    // pri
     Pri,
+    // type
     Type,
+    // embed
     Embed,
+    // macro
     Macro,
+    // true
     True,
+    // false
     False,
+    // none
     None,
+
+    // symbols and operators
+    // @
     At,
+    // ->
     Arrow,
+    // &&
     And,
+    // ||
     Or,
+    // ^^
     Xor,
+    // !
     Not,
+    // :&
     BitAnd,
+    // :|
     BitOr,
+    // :^
     BitXor,
+    // :<
     BitNot,
+    // >>
     ShiftRight,
+    // <<
     ShiftLeft,
+    // ++
     Increment,
+    // --
     Decrement,
+    // +=
     AddAssign,
+    // -=
     SubAssign,
+    // *=
     MulAssign,
+    // /=
     DivAssign,
+    // ==
     Equal,
+    // >=
     GreaterEqual,
+    // <=
     LessEqual,
+    // !=
     NotEqual,
+    // ...
     Ellipsis,
+    // ..
     Range,
+    // ..=
     RangeInclusive,
+    // .
     Dot,
+    // +
     Add,
+    // -
     Subtract,
+    // *
     Multiply,
+    // /
     Divide,
+    // =
     EqualSign,
+    // >
     Greater,
+    // <
     Less,
+    // &
     Ampersand,
+    // ?
     Question,
+    // ^
     Caret,
-    Exclamation,
+    // :
     Colon,
+    // ::
     DoubleColon,
+    // ;
     Semicolon,
+    // ,
     Comma,
+    // (
     OpenParen,
+    // )
     CloseParen,
+    // {
     OpenBrace,
+    // }
     CloseBrace,
+    // [
     OpenBracket,
+    // ]
     CloseBracket,
+    // <
     OpenAngle,
+    // >
     CloseAngle,
 }
 
