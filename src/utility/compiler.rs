@@ -17,11 +17,11 @@ use crate::user_type::{UserTypeDeclaration, parse_user_types};
 
 pub use crate::program::Program;
 
-#[path = "macro_expand.rs"]
+#[path = "../parser/macro_expand.rs"]
 mod macro_expand;
-#[path = "parser_contract.rs"]
+#[path = "../parser/parser_contract.rs"]
 mod parser_contract;
-#[path = "type_syntax.rs"]
+#[path = "../semantic/type_syntax.rs"]
 mod type_syntax;
 
 #[derive(Debug, Clone, PartialEq, Eq)]

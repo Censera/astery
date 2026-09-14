@@ -11,6 +11,10 @@ license = "Apache-License-2.0"
 keywords = ["compiler", "language", "llvm"]
 categories = ["command-line-utilities", "development-tools::compilers"]
 
+[[bin]]
+name = "astery"
+path = "src/cli/main.rs"
+
 [dependencies]
 an-inkwell = "26"
 

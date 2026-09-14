@@ -1,17 +1,32 @@
+#[path = "extra/cast_pointer.rs"]
 mod cast_pointer;
+#[path = "utility/compiler.rs"]
 mod compiler;
+#[path = "backend/context.rs"]
 mod context;
+#[path = "extra/embed.rs"]
 mod embed;
+#[path = "utility/error.rs"]
 mod error;
+#[path = "backend/function.rs"]
 mod function;
+#[path = "backend/handler.rs"]
 mod handler;
+#[path = "lexer/lexer.rs"]
 mod lexer;
+#[path = "backend/module.rs"]
 mod module;
+#[path = "parser/parser.rs"]
 mod parser;
+#[path = "parser/program.rs"]
 mod program;
+#[path = "semantic/semantic.rs"]
 mod semantic;
+#[path = "semantic/span.rs"]
 mod span;
+#[path = "backend/shortcuts.rs"]
 pub mod shortcuts;
+#[path = "semantic/user_type.rs"]
 mod user_type;
 
 pub use cast_pointer::{AddressOfExpression, CastExpression, PointerType};

@@ -1,4 +1,4 @@
-#[path = "macros.rs"]
+#[path = "../extra/macros.rs"]
 mod macros;
 
 pub use macros::{MacroCall, MacroDeclaration, parse_macro_call, parse_macros};
