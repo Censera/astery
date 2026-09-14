@@ -210,8 +210,7 @@ impl<'a> Parser<'a> {
             "f64" => TypeSyntax::Float { bits: 64 },
             "Union" => self.parse_union()?,
             _ => {
-                if self.peek() == Some(&TokenKind::DoubleColon) {
-                    self.position += 1;
+                if self.take(TokenKind::Tetraops) {
                     self.parse_generic_application(name)?
                 } else {
                     TypeSyntax::User(name)
@@ -222,9 +221,8 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_generic_application(&mut self, name: String) -> Result<TypeSyntax, String> {
-        self.expect_any(&[TokenKind::OpenAngle, TokenKind::Less], "expected `<` in generic type")?;
         let mut arguments = Vec::new();
-        if self.take_any(&[TokenKind::CloseAngle, TokenKind::Greater]) {
+        if self.take(TokenKind::Greater) {
             return Err("generic type requires at least one argument".into());
         }
         loop {
@@ -232,20 +230,18 @@ impl<'a> Parser<'a> {
             if self.take(TokenKind::Comma) {
                 continue;
             }
-            self.expect_any(&[TokenKind::CloseAngle, TokenKind::Greater], "expected `>` in generic type")?;
+            self.expect(TokenKind::Greater, "expected `>` in generic type")?;
             break;
         }
         Ok(TypeSyntax::Generic { name, arguments })
     }
 
     fn parse_union(&mut self) -> Result<TypeSyntax, String> {
-        if self.take(TokenKind::DoubleColon) || self.take(TokenKind::Colon) {
-            self.expect_any(&[TokenKind::OpenAngle, TokenKind::Less], "expected `<` in union type")?;
-        } else if !self.take(TokenKind::BitNot) {
-            return Err("expected `::` in union type".into());
+        if !self.take(TokenKind::Tetraops) {
+            return Err("expected `::<` in union type".into());
         }
         let mut types = Vec::new();
-        if self.take_any(&[TokenKind::CloseAngle, TokenKind::Greater]) {
+        if self.take(TokenKind::Greater) {
             return Err("union type requires at least one member".into());
         }
         loop {
@@ -253,7 +249,7 @@ impl<'a> Parser<'a> {
             if self.take(TokenKind::Comma) {
                 continue;
             }
-            self.expect_any(&[TokenKind::CloseAngle, TokenKind::Greater], "expected `>` in union type")?;
+            self.expect(TokenKind::Greater, "expected `>` in union type")?;
             break;
         }
         Ok(TypeSyntax::Union(types))
@@ -273,23 +269,6 @@ impl<'a> Parser<'a> {
 
     fn take(&mut self, expected: TokenKind) -> bool {
         if self.peek() == Some(&expected) {
-            self.position += 1;
-            true
-        } else {
-            false
-        }
-    }
-
-    fn expect_any(&mut self, expected: &[TokenKind], message: &str) -> Result<(), String> {
-        if expected.iter().any(|kind| self.take(kind.clone())) {
-            Ok(())
-        } else {
-            Err(message.into())
-        }
-    }
-
-    fn take_any(&mut self, expected: &[TokenKind]) -> bool {
-        if expected.iter().any(|kind| self.peek() == Some(kind)) {
             self.position += 1;
             true
         } else {
@@ -324,7 +303,7 @@ mod tests {
         let alias = parse_alias(
             "Result",
             vec!["T".into(), "E".into()],
-            &kinds("Union:<T, E>"),
+            &kinds("Union::<T, E>"),
         )
         .unwrap();
         assert_eq!(alias.name, "Result");
