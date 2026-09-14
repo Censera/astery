@@ -1,5 +1,7 @@
 use std::fmt;
 
+use crate::span::SourceSpan;
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Stage {
     Lexer,
@@ -22,8 +24,7 @@ pub enum Error {
         message: String,
     },
     Semantic {
-        line: usize,
-        column: usize,
+        span: SourceSpan,
         message: String,
     },
     WithSource {
@@ -52,27 +53,58 @@ impl Error {
         }
     }
 
-    fn diagnostic(&self) -> Option<(&str, usize, usize, &str)> {
+    pub fn semantic(span: SourceSpan, message: impl Into<String>) -> Self {
+        Self::Semantic {
+            span,
+            message: message.into(),
+        }
+    }
+
+    fn diagnostic(&self) -> Option<Diagnostic<'_>> {
         match self {
             Self::Lex {
                 line,
                 column,
                 message,
-            } => Some(("E", *line, *column, message)),
+            } => Some(Diagnostic::Point {
+                kind: "E",
+                line: *line,
+                column: *column,
+                message,
+            }),
             Self::Parse {
                 line,
                 column,
                 message,
-            } => Some(("E", *line, *column, message)),
-            Self::Semantic {
-                line,
-                column,
+            } => Some(Diagnostic::Point {
+                kind: "E",
+                line: *line,
+                column: *column,
                 message,
-            } => Some(("E", *line, *column, message)),
+            }),
+            Self::Semantic { span, message } => Some(Diagnostic::Span {
+                kind: "E",
+                span: *span,
+                message,
+            }),
             Self::WithSource { error, .. } => error.diagnostic(),
             _ => None,
         }
     }
+}
+
+enum Diagnostic<'a> {
+    Point {
+        kind: &'static str,
+        line: usize,
+        column: usize,
+        message: &'a str,
+    },
+    Span {
+        kind: &'static str,
+        span: SourceSpan,
+        message: &'a str,
+    },
 }
 
 impl fmt::Display for Error {
@@ -80,10 +112,26 @@ impl fmt::Display for Error {
         match self {
             Self::Io(error) => write!(f, "I/O error: {error}"),
             Self::WithSource { source, error } => {
-                if let Some((kind, line, column, message)) = error.diagnostic() {
-                    write!(f, "{kind} [{source}][{line}][{column}] {message}")
-                } else {
-                    write!(f, "{error}")
+                match error.diagnostic() {
+                    Some(Diagnostic::Point {
+                        kind,
+                        line,
+                        column,
+                        message,
+                    }) => write!(f, "{kind} [{source}][{line}][{column}] {message}"),
+                    Some(Diagnostic::Span {
+                        kind,
+                        span,
+                        message,
+                    }) => write!(
+                        f,
+                        "{kind} [{source}][{}:{}-{}:{}] {message}",
+                        span.start.line,
+                        span.start.column,
+                        span.end.line,
+                        span.end.column,
+                    ),
+                    None => write!(f, "{error}"),
                 }
             }
             Self::Lex {
@@ -95,12 +143,15 @@ impl fmt::Display for Error {
                 line,
                 column,
                 message,
-            }
-            | Self::Semantic {
-                line,
-                column,
-                message,
             } => write!(f, "E [{line}][{column}] {message}"),
+            Self::Semantic { span, message } => write!(
+                f,
+                "E [{}:{}-{}:{}] {message}",
+                span.start.line,
+                span.start.column,
+                span.end.line,
+                span.end.column,
+            ),
             Self::StageNotImplemented(stage) => {
                 write!(f, "compiler stage is not implemented: {stage:?}")
             }
