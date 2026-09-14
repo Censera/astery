@@ -65,14 +65,10 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_parameters(&mut self) -> Result<Vec<String>, Error> {
-        if self.peek() != Some(&TokenKind::DoubleColon) {
+        if self.peek() != Some(&TokenKind::Tetraops) {
             return Ok(Vec::new());
         }
 
-        self.advance();
-        if !matches!(self.peek(), Some(TokenKind::OpenAngle | TokenKind::Less)) {
-            return Err(self.error("expected `<` after type name"));
-        }
         self.advance();
         let mut parameters = Vec::new();
         loop {
@@ -82,7 +78,7 @@ impl<'a> Parser<'a> {
                 self.advance();
                 continue;
             }
-            if !matches!(self.peek(), Some(TokenKind::CloseAngle | TokenKind::Greater)) {
+            if self.peek() != Some(&TokenKind::Greater) {
                 return Err(self.error("expected `>` after type parameters"));
             }
             self.advance();
@@ -239,7 +235,7 @@ mod tests {
 
     #[test]
     fn parses_parameterized_alias() {
-        let tokens = tokenize("type Result::<T, E> = Union:<T, E>").unwrap();
+        let tokens = tokenize("type Result::<T, E> = Union::<T, E>").unwrap();
         let types = parse_user_types(&tokens).unwrap();
         assert_eq!(types[0].name, "Result");
         assert_eq!(types[0].parameters, vec!["T", "E"]);
@@ -247,7 +243,7 @@ mod tests {
             types[0].definition,
             UserTypeDefinition::Alias(vec![
                 TokenKind::Identifier("Union".into()),
-                TokenKind::BitNot,
+                TokenKind::Tetraops,
                 TokenKind::Identifier("T".into()),
                 TokenKind::Comma,
                 TokenKind::Identifier("E".into()),
