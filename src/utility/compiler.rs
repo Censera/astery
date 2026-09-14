@@ -54,7 +54,9 @@ pub struct Sources {
 
 impl Sources {
     pub fn new(sources: impl IntoIterator<Item = Source>) -> Result<Self, Error> {
-        let mut result = Self { sources: Vec::new() };
+        let mut result = Self {
+            sources: Vec::new(),
+        };
         for source in sources {
             result.push(source)?;
         }
@@ -68,7 +70,11 @@ impl Sources {
     }
 
     pub fn push(&mut self, source: Source) -> Result<(), Error> {
-        if self.sources.iter().any(|existing| existing.name() == source.name()) {
+        if self
+            .sources
+            .iter()
+            .any(|existing| existing.name() == source.name())
+        {
             return Err(Error::InvalidOptions(format!(
                 "duplicate source unit `{}`",
                 source.name()
@@ -172,7 +178,10 @@ impl Compiler {
         parse_intos(&tokens).map_err(|error| error.with_source(source.name()))
     }
 
-    pub(crate) fn parse_user_types(&self, source: &Source) -> Result<Vec<UserTypeDeclaration>, Error> {
+    pub(crate) fn parse_user_types(
+        &self,
+        source: &Source,
+    ) -> Result<Vec<UserTypeDeclaration>, Error> {
         let tokens = self.tokenize(source)?;
         parse_user_types(&tokens).map_err(|error| error.with_source(source.name()))
     }
@@ -192,7 +201,10 @@ impl Compiler {
         parse_address_of(&tokens).map_err(|error| error.with_source(source.name()))
     }
 
-    pub(crate) fn parse_embedded_blocks(&self, source: &Source) -> Result<Vec<EmbeddedBlock>, Error> {
+    pub(crate) fn parse_embedded_blocks(
+        &self,
+        source: &Source,
+    ) -> Result<Vec<EmbeddedBlock>, Error> {
         parse_embedded_blocks(source.text()).map_err(|error| error.with_source(source.name()))
     }
 
@@ -211,7 +223,10 @@ impl Compiler {
         parse_bindings(&tokens).map_err(|error| error.with_source(source.name()))
     }
 
-    pub(crate) fn parse_functions(&self, source: &Source) -> Result<Vec<FunctionDeclaration>, Error> {
+    pub(crate) fn parse_functions(
+        &self,
+        source: &Source,
+    ) -> Result<Vec<FunctionDeclaration>, Error> {
         let tokens = parser_contract::normalize_function_return_tokens(source.text())
             .map_err(|error| error.with_source(source.name()))?;
         parse_functions(&tokens).map_err(|error| error.with_source(source.name()))

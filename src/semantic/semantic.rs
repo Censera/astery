@@ -70,11 +70,7 @@ impl SemanticImportItem {
     fn from_parser(item: &ImportItem) -> Self {
         Self {
             name: item.name.clone(),
-            items: item
-                .items
-                .iter()
-                .map(Self::from_parser)
-                .collect(),
+            items: item.items.iter().map(Self::from_parser).collect(),
         }
     }
 }
@@ -127,11 +123,7 @@ impl SemanticProgram {
         Some(SourceSpan::covering(first.span.start, last.span.end))
     }
 
-    pub(crate) fn semantic_error(
-        &self,
-        span: SourceSpan,
-        message: impl Into<String>,
-    ) -> Error {
+    pub(crate) fn semantic_error(&self, span: SourceSpan, message: impl Into<String>) -> Error {
         Error::semantic(span, message)
     }
 

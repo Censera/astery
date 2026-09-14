@@ -41,20 +41,12 @@ pub fn normalize_function_return_tokens(source: &str) -> Result<Vec<Token>, Erro
 
         tokens.insert(
             first,
-            Token::synthetic(
-                TokenKind::OpenBracket,
-                start_line,
-                start_column,
-            ),
+            Token::synthetic(TokenKind::OpenBracket, start_line, start_column),
         );
         let close_index = name_index + 1;
         tokens.insert(
             close_index,
-            Token::synthetic(
-                TokenKind::CloseBracket,
-                name_line,
-                name_column,
-            ),
+            Token::synthetic(TokenKind::CloseBracket, name_line, name_column),
         );
         index = close_index + 1;
     }

@@ -324,7 +324,8 @@ impl<'src> Lexer<'src> {
             value.push(self.advance().expect("peeked byte must exist") as char);
         }
 
-        let is_float = self.peek() == Some(b'.') && self.peek_next().is_some_and(|byte| byte.is_ascii_digit());
+        let is_float =
+            self.peek() == Some(b'.') && self.peek_next().is_some_and(|byte| byte.is_ascii_digit());
         if is_float {
             value.push(self.advance().expect("peeked byte must exist") as char);
             while self.peek().is_some_and(|byte| byte.is_ascii_digit()) {
@@ -380,9 +381,17 @@ impl<'src> Lexer<'src> {
             }
             if self.matches(b'\'') {
                 if value.chars().count() == 1 {
-                    return Ok(Token::new(TokenKind::Character(value.chars().next().unwrap()), line, column));
+                    return Ok(Token::new(
+                        TokenKind::Character(value.chars().next().unwrap()),
+                        line,
+                        column,
+                    ));
                 }
-                return Err(self.lex_error(line, column, "character literal must contain one character"));
+                return Err(self.lex_error(
+                    line,
+                    column,
+                    "character literal must contain one character",
+                ));
             }
             return Ok(Token::new(TokenKind::Label(value), line, column));
         }
@@ -404,7 +413,11 @@ impl<'src> Lexer<'src> {
             Some(b'\\') => Ok('\\'),
             Some(b'"') => Ok('"'),
             Some(b'\'') => Ok('\''),
-            Some(byte) => Err(self.lex_error(line, column, &format!("unknown escape `\\{}`", byte as char))),
+            Some(byte) => Err(self.lex_error(
+                line,
+                column,
+                &format!("unknown escape `\\{}`", byte as char),
+            )),
             None => Err(self.lex_error(line, column, "unterminated escape sequence")),
         }
     }

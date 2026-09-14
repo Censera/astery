@@ -122,29 +122,24 @@ impl fmt::Display for Error {
             Self::InvalidOptions(message) => write!(f, "invalid compiler options: {message}"),
             Self::UnsupportedTarget(target) => write!(f, "unsupported target: {target}"),
             Self::Backend(message) => write!(f, "backend error: {message}"),
-            Self::WithSource { source, error } => {
-                match error.diagnostic() {
-                    Some(Diagnostic::Point {
-                        kind,
-                        line,
-                        column,
-                        message,
-                    }) => write!(f, "{kind} [{source}][{line}][{column}] {message}"),
-                    Some(Diagnostic::Span {
-                        kind,
-                        span,
-                        message,
-                    }) => write!(
-                        f,
-                        "{kind} [{source}][{}:{}-{}:{}] {message}",
-                        span.start.line,
-                        span.start.column,
-                        span.end.line,
-                        span.end.column,
-                    ),
-                    None => write!(f, "{error}"),
-                }
-            }
+            Self::WithSource { source, error } => match error.diagnostic() {
+                Some(Diagnostic::Point {
+                    kind,
+                    line,
+                    column,
+                    message,
+                }) => write!(f, "{kind} [{source}][{line}][{column}] {message}"),
+                Some(Diagnostic::Span {
+                    kind,
+                    span,
+                    message,
+                }) => write!(
+                    f,
+                    "{kind} [{source}][{}:{}-{}:{}] {message}",
+                    span.start.line, span.start.column, span.end.line, span.end.column,
+                ),
+                None => write!(f, "{error}"),
+            },
             Self::Lex {
                 line,
                 column,
@@ -158,10 +153,7 @@ impl fmt::Display for Error {
             Self::Semantic { span, message } => write!(
                 f,
                 "E [{}:{}-{}:{}] {message}",
-                span.start.line,
-                span.start.column,
-                span.end.line,
-                span.end.column,
+                span.start.line, span.start.column, span.end.line, span.end.column,
             ),
             Self::StageNotImplemented(stage) => {
                 write!(f, "compiler stage is not implemented: {stage:?}")

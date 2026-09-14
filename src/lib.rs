@@ -22,10 +22,10 @@ mod parser;
 mod program;
 #[path = "semantic/semantic.rs"]
 mod semantic;
-#[path = "semantic/span.rs"]
-mod span;
 #[path = "backend/shortcuts.rs"]
 pub mod shortcuts;
+#[path = "semantic/span.rs"]
+mod span;
 #[path = "semantic/user_type.rs"]
 mod user_type;
 
@@ -51,7 +51,9 @@ pub use user_type::{UserTypeDeclaration, UserTypeDefinition};
 mod tests {
     use super::{Compiler, CompilerOptions, Error, Output, Source, Sources, Stage, Target};
     use crate::lexer::{Token, TokenKind};
-    use crate::parser::{BinaryOperator, BindingKind, Expression, Import, ModuleDeclaration, Statement};
+    use crate::parser::{
+        BinaryOperator, BindingKind, Expression, Import, ModuleDeclaration, Statement,
+    };
     use crate::shortcuts;
 
     #[test]
@@ -161,17 +163,16 @@ mod tests {
         assert_eq!(string.column(), 12);
         assert_eq!(string.span().start.line, 2);
         assert_eq!(string.span().start.column, 12);
-        assert_eq!(
-            string.kind(),
-            &TokenKind::String("a\n\t\0\\\"".into())
-        );
+        assert_eq!(string.kind(), &TokenKind::String("a\n\t\0\\\"".into()));
     }
 
     #[test]
     fn rejects_invalid_numeric_literals_at_the_lexer_stage() {
         let compiler = Compiler::new();
         for source in ["12abc", "1.2.3"] {
-            let error = compiler.tokenize(&Source::new("main.as", source)).unwrap_err();
+            let error = compiler
+                .tokenize(&Source::new("main.as", source))
+                .unwrap_err();
             assert_eq!(error.stage(), Some(Stage::Lexer));
             assert!(error.to_string().contains("invalid numeric literal"));
         }
@@ -304,7 +305,9 @@ mod tests {
             "fn main() { match value { item { },",
             "use { math, memory",
         ] {
-            let error = compiler.parse_program(&Source::new("main.as", source)).unwrap_err();
+            let error = compiler
+                .parse_program(&Source::new("main.as", source))
+                .unwrap_err();
             assert_eq!(error.stage(), Some(Stage::Parser));
         }
     }
@@ -325,7 +328,10 @@ mod tests {
     fn parser_expression_precedence_and_associativity_are_stable() {
         let compiler = Compiler::new();
         let program = compiler
-            .parse_program(&Source::new("main.as", "fn main() { 1 + 2 * 3 - 4; 10 - 3 - 2; }"))
+            .parse_program(&Source::new(
+                "main.as",
+                "fn main() { 1 + 2 * 3 - 4; 10 - 3 - 2; }",
+            ))
             .unwrap();
         let statements = &program.functions[0].body.statements;
         assert!(matches!(
@@ -367,7 +373,10 @@ mod tests {
         ));
         assert!(matches!(
             &statements[2],
-            Statement::Expression(Expression::Range { inclusive: false, .. })
+            Statement::Expression(Expression::Range {
+                inclusive: false,
+                ..
+            })
         ));
         assert!(matches!(
             &statements[3],
