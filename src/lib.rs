@@ -29,12 +29,23 @@ pub mod shortcuts;
 #[path = "semantic/user_type.rs"]
 mod user_type;
 
-pub use compiler::{Compiler, CompilerOptions, Output, Source, Sources, Target};
+pub use cast_pointer::{AddressOfExpression, CastExpression, PointerType};
+pub use compiler::{Compiler, CompilerOptions, Output, Program, Source, Sources, Target};
 pub use context::Context;
+pub use embed::EmbeddedBlock;
 pub use error::{Error, Stage};
 pub use function::Function;
 pub use handler::Handler;
+pub use lexer::{Token, TokenKind};
 pub use module::Module;
+pub use parser::{
+    BinaryOperator, Binding, BindingDeclaration, BindingKind, Block, EnumDeclaration, EnumField,
+    EnumVariant, EnumVariantKind, Expression, ForStatement, FunctionDeclaration, IfStatement,
+    Import, ImportItem, IntoImplementation, LoopStatement, MatchArm, MatchStatement,
+    MethodDeclaration, ModuleDeclaration, Parameter, Statement, StructDeclaration, StructField,
+    UnaryOperator, Visibility, WhileStatement,
+};
+pub use user_type::{UserTypeDeclaration, UserTypeDefinition};
 
 #[cfg(test)]
 mod tests {
