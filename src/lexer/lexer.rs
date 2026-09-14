@@ -332,7 +332,9 @@ impl<'src> Lexer<'src> {
             }
         }
 
-        if self.peek().is_some_and(|byte| is_identifier_start(byte) || byte == b'.') {
+        if self.peek().is_some_and(|byte| is_identifier_start(byte))
+            || (self.peek() == Some(b'.') && self.peek_next() != Some(b'.'))
+        {
             return Err(self.lex_error(line, column, "invalid numeric literal"));
         }
 
