@@ -1,6 +1,7 @@
 use crate::lexer::TokenKind;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
+/// Parsed type syntax retained for semantic lowering.
 pub enum TypeSyntax {
     Void,
     Bool,
@@ -14,6 +15,11 @@ pub enum TypeSyntax {
         bits: u16,
     },
     User(String),
+    Generic {
+        name: String,
+        arguments: Vec<TypeSyntax>,
+    },
+    Parameter(String),
     Pointer {
         optional: bool,
         pointee: Box<TypeSyntax>,
@@ -30,12 +36,27 @@ pub enum TypeSyntax {
     Union(Vec<TypeSyntax>),
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct TypeAlias {
+    pub name: String,
+    pub parameters: Vec<String>,
+    pub target: TypeSyntax,
+}
+
 pub fn parse(tokens: &[TokenKind]) -> Result<TypeSyntax, String> {
+    parse_with_parameters(tokens, &[])
+}
+
+pub fn parse_with_parameters(
+    tokens: &[TokenKind],
+    parameters: &[String],
+) -> Result<TypeSyntax, String> {
     if tokens.is_empty() {
         return Ok(TypeSyntax::Void);
     }
     let mut parser = Parser {
         tokens,
+        parameters,
         position: 0,
     };
     let ty = parser.parse_type()?;
@@ -45,8 +66,22 @@ pub fn parse(tokens: &[TokenKind]) -> Result<TypeSyntax, String> {
     Ok(ty)
 }
 
+pub fn parse_alias(
+    name: impl Into<String>,
+    parameters: Vec<String>,
+    tokens: &[TokenKind],
+) -> Result<TypeAlias, String> {
+    let target = parse_with_parameters(tokens, &parameters)?;
+    Ok(TypeAlias {
+        name: name.into(),
+        parameters,
+        target,
+    })
+}
+
 struct Parser<'a> {
     tokens: &'a [TokenKind],
+    parameters: &'a [String],
     position: usize,
 }
 
@@ -123,6 +158,10 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_named_type(&mut self, name: String) -> Result<TypeSyntax, String> {
+        if self.parameters.iter().any(|parameter| parameter == &name) {
+            return Ok(TypeSyntax::Parameter(name));
+        }
+
         let ty = match name.as_str() {
             "bool" => TypeSyntax::Bool,
             "char" => TypeSyntax::Char,
@@ -170,15 +209,44 @@ impl<'a> Parser<'a> {
             "f32" => TypeSyntax::Float { bits: 32 },
             "f64" => TypeSyntax::Float { bits: 64 },
             "Union" => self.parse_union()?,
-            _ => TypeSyntax::User(name),
+            _ => {
+                if self.peek() == Some(&TokenKind::DoubleColon) {
+                    self.position += 1;
+                    self.parse_generic_application(name)?
+                } else {
+                    TypeSyntax::User(name)
+                }
+            }
         };
         Ok(ty)
     }
 
+    fn parse_generic_application(&mut self, name: String) -> Result<TypeSyntax, String> {
+        self.expect(TokenKind::OpenAngle, "expected `<` in generic type")?;
+        let mut arguments = Vec::new();
+        if self.take(TokenKind::CloseAngle) {
+            return Err("generic type requires at least one argument".into());
+        }
+        loop {
+            arguments.push(self.parse_type()?);
+            if self.take(TokenKind::Comma) {
+                continue;
+            }
+            self.expect(TokenKind::CloseAngle, "expected `>` in generic type")?;
+            break;
+        }
+        Ok(TypeSyntax::Generic { name, arguments })
+    }
+
     fn parse_union(&mut self) -> Result<TypeSyntax, String> {
-        self.expect(TokenKind::DoubleColon, "expected `::` in union type")?;
+        if !self.take(TokenKind::DoubleColon) && !self.take(TokenKind::Colon) {
+            return Err("expected `::` in union type".into());
+        }
         self.expect(TokenKind::OpenAngle, "expected `<` in union type")?;
         let mut types = Vec::new();
+        if self.take(TokenKind::CloseAngle) {
+            return Err("union type requires at least one member".into());
+        }
         loop {
             types.push(self.parse_type()?);
             if self.take(TokenKind::Comma) {
@@ -217,5 +285,77 @@ impl<'a> Parser<'a> {
         } else {
             Err(message.into())
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{TypeSyntax, parse, parse_alias};
+    use crate::{TokenKind, lexer::tokenize};
+
+    fn kinds(source: &str) -> Vec<TokenKind> {
+        tokenize(source)
+            .unwrap()
+            .into_iter()
+            .map(|token| token.kind().clone())
+            .collect()
+    }
+
+    #[test]
+    fn parses_parameterized_generic_union_aliases() {
+        let alias = parse_alias(
+            "Result",
+            vec!["T".into(), "E".into()],
+            &kinds("Union:<T, E>"),
+        )
+        .unwrap();
+        assert_eq!(alias.name, "Result");
+        assert_eq!(alias.parameters, vec!["T", "E"]);
+        assert_eq!(
+            alias.target,
+            TypeSyntax::Union(vec![
+                TypeSyntax::Parameter("T".into()),
+                TypeSyntax::Parameter("E".into()),
+            ])
+        );
+    }
+
+    #[test]
+    fn parses_concrete_generic_type_applications() {
+        let ty = parse(&kinds("Result::<i64, string>")).unwrap();
+        assert_eq!(
+            ty,
+            TypeSyntax::Generic {
+                name: "Result".into(),
+                arguments: vec![
+                    TypeSyntax::Integer {
+                        signed: true,
+                        bits: 64,
+                    },
+                    TypeSyntax::String,
+                ],
+            }
+        );
+    }
+
+    #[test]
+    fn parses_parameterized_union_directly() {
+        let ty = parse(&kinds("Union::<i64, string>")).unwrap();
+        assert_eq!(
+            ty,
+            TypeSyntax::Union(vec![
+                TypeSyntax::Integer {
+                    signed: true,
+                    bits: 64,
+                },
+                TypeSyntax::String,
+            ])
+        );
+    }
+
+    #[test]
+    fn rejects_empty_generic_arguments() {
+        let error = parse(&kinds("Result::<>")).unwrap_err();
+        assert!(error.contains("generic type requires at least one argument"));
     }
 }
