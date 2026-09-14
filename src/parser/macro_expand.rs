@@ -1,7 +1,8 @@
 use std::collections::HashMap;
 
+use crate::error::Error;
+use crate::lexer::{Token, TokenKind};
 use crate::shortcuts::{MacroDeclaration, parse_macros};
-use crate::{Error, Token, TokenKind};
 
 const MAX_EXPANSION_DEPTH: usize = 64;
 
@@ -239,8 +240,7 @@ fn error_at(token: Option<&Token>, message: &str) -> Error {
 #[cfg(test)]
 mod tests {
     use super::expand_macros;
-    use crate::TokenKind;
-    use crate::lexer::tokenize;
+    use crate::lexer::{TokenKind, tokenize};
 
     fn kinds(source: &str) -> Vec<TokenKind> {
         expand_macros(&tokenize(source).unwrap())
