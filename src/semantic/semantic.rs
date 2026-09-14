@@ -2,6 +2,11 @@ use crate::Token;
 use crate::compiler::{Program, Source};
 use crate::span::{SourceSpan, Spanned};
 
+/// Semantic analysis input retains the parser program and expanded token stream.
+/// The parser program is the structural input. The token stream is retained for
+/// source spans and macro-expanded source ownership. Semantic lowering has not
+/// discarded parser information yet, so later semantic passes do not need to
+/// reconstruct locations from source text.
 #[derive(Debug)]
 pub(crate) struct SemanticProgram {
     pub(crate) source: Source,
