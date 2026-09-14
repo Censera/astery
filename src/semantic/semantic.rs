@@ -77,13 +77,14 @@ pub(crate) struct SemanticOverloadSet {
 }
 
 impl SemanticOverloadSet {
-    pub(crate) fn from_functions(
-        functions: &[FunctionDeclaration],
-    ) -> Result<Vec<Self>, String> {
+    pub(crate) fn from_functions(functions: &[FunctionDeclaration]) -> Result<Vec<Self>, String> {
         let mut overloads = Vec::new();
         for function in functions {
             let signature = SemanticFunctionSignature::from_function(function)?;
-            if let Some(set) = overloads.iter_mut().find(|set: &&mut Self| set.name == function.name) {
+            if let Some(set) = overloads
+                .iter_mut()
+                .find(|set: &&mut Self| set.name == function.name)
+            {
                 set.signatures.push(signature);
             } else {
                 overloads.push(Self {
@@ -281,15 +282,20 @@ mod tests {
         let function = &parse_functions(&tokens).unwrap()[0];
         let signature = SemanticFunctionSignature::from_function(function).unwrap();
         assert_eq!(signature.parameters.len(), 2);
-        assert_eq!(signature.return_type, super::TypeSyntax::Integer { signed: true, bits: 32 });
+        assert_eq!(
+            signature.return_type,
+            super::TypeSyntax::Integer {
+                signed: true,
+                bits: 32
+            }
+        );
     }
 
     #[test]
     fn groups_functions_into_overload_sets() {
-        let tokens = tokenize(
-            "fn [i32] add(a i32) {} fn [f64] add(a f64) {} fn [i32] sub(a i32) {}",
-        )
-        .unwrap();
+        let tokens =
+            tokenize("fn [i32] add(a i32) {} fn [f64] add(a f64) {} fn [i32] sub(a i32) {}")
+                .unwrap();
         let functions = parse_functions(&tokens).unwrap();
         let overloads = SemanticOverloadSet::from_functions(&functions).unwrap();
         assert_eq!(overloads.len(), 2);
