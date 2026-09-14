@@ -29,34 +29,23 @@ pub mod shortcuts;
 #[path = "semantic/user_type.rs"]
 mod user_type;
 
-pub use cast_pointer::{AddressOfExpression, CastExpression, PointerType};
-pub use compiler::{Compiler, Program, Source};
+pub use compiler::{Compiler, CompilerOptions, Output, Source, Sources, Target};
 pub use context::Context;
-pub use embed::EmbeddedBlock;
 pub use error::{Error, Stage};
 pub use function::Function;
 pub use handler::Handler;
-pub use lexer::{Token, TokenKind};
 pub use module::Module;
-pub use parser::{
-    BinaryOperator, Binding, BindingDeclaration, BindingKind, Block, EnumDeclaration, EnumField,
-    EnumVariant, EnumVariantKind, Expression, ForStatement, FunctionDeclaration, IfStatement,
-    Import, ImportItem, IntoImplementation, LoopStatement, MatchArm, MatchStatement,
-    MethodDeclaration, ModuleDeclaration, Parameter, Statement, StructDeclaration, StructField,
-    UnaryOperator, Visibility, WhileStatement,
-};
-pub use user_type::{UserTypeDeclaration, UserTypeDefinition};
 
 #[cfg(test)]
 mod tests {
-    use super::{
-        BinaryOperator, BindingKind, Compiler, Context, Error, Expression, Import,
-        ModuleDeclaration, Source, Stage, Statement, Token, TokenKind, shortcuts,
-    };
+    use super::{Compiler, CompilerOptions, Error, Output, Source, Sources, Stage, Target};
+    use crate::lexer::{Token, TokenKind};
+    use crate::parser::{BinaryOperator, BindingKind, Expression, Import, ModuleDeclaration, Statement};
+    use crate::shortcuts;
 
     #[test]
     fn creates_i32_function() {
-        let context = Context::create();
+        let context = crate::Context::create();
         let module = context.module("test").unwrap();
         let function = shortcuts::i32_function(&module, "answer").unwrap();
         let handler = shortcuts::handler(&function, &context).unwrap();
@@ -68,7 +57,7 @@ mod tests {
 
     #[test]
     fn creates_void_function() {
-        let context = Context::create();
+        let context = crate::Context::create();
         let module = context.module("test").unwrap();
         let function = shortcuts::void_function(&module, "main").unwrap();
         let handler = function.handler(&context).unwrap();
@@ -88,6 +77,24 @@ mod tests {
         let source = Source::new("test.astery", "fn main() {}");
         assert_eq!(source.name(), "test.astery");
         assert_eq!(source.text(), "fn main() {}");
+    }
+
+    #[test]
+    fn source_sets_reject_duplicate_names() {
+        let error = Sources::new([
+            Source::new("main.as", "fn main() {}"),
+            Source::new("main.as", "fn main() {}"),
+        ])
+        .unwrap_err();
+        assert!(matches!(error, Error::InvalidOptions(_)));
+    }
+
+    #[test]
+    fn compiler_options_have_explicit_native_defaults() {
+        let options = CompilerOptions::default();
+        assert_eq!(options.target, Target::Native);
+        assert_eq!(options.output, Output::Executable);
+        assert!(options.validate().is_ok());
     }
 
     #[test]
@@ -218,5 +225,16 @@ mod tests {
         assert_eq!(program.imports.len(), 1);
         assert_eq!(program.structs.len(), 1);
         assert_eq!(program.functions.len(), 1);
+    }
+
+    #[allow(dead_code)]
+    fn _keep_parser_types_reachable_for_tests(
+        _: BinaryOperator,
+        _: BindingKind,
+        _: Expression,
+        _: Import,
+        _: ModuleDeclaration,
+        _: Statement,
+    ) {
     }
 }
