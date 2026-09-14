@@ -1,51 +1,5 @@
 use crate::{Error, Token, TokenKind};
 
-pub fn normalize_function_return_types(source: &str) -> Result<String, Error> {
-    let tokens = crate::lexer::tokenize(source)?;
-    let mut insertions = Vec::new();
-    let line_starts = line_starts(source);
-
-    let mut index = 0;
-    while index < tokens.len() {
-        if tokens[index].kind() != &TokenKind::Fn {
-            index += 1;
-            continue;
-        }
-
-        let first = index + 1;
-        if first >= tokens.len() {
-            break;
-        }
-
-        if tokens[first].kind() == &TokenKind::OpenBracket {
-            index = first + 1;
-            continue;
-        }
-
-        let Some(name_index) = find_function_name(&tokens, first) else {
-            index = first;
-            continue;
-        };
-
-        if name_index == first {
-            index = name_index + 1;
-            continue;
-        }
-
-        let start = offset(&line_starts, &tokens[first]);
-        let end = offset(&line_starts, &tokens[name_index]);
-        insertions.push((start, "["));
-        insertions.push((end, "]"));
-        index = name_index + 1;
-    }
-
-    let mut normalized = source.to_owned();
-    for (position, text) in insertions.into_iter().rev() {
-        normalized.insert_str(position, text);
-    }
-    Ok(normalized)
-}
-
 pub fn normalize_function_return_tokens(source: &str) -> Result<Vec<Token>, Error> {
     let mut tokens = crate::lexer::tokenize(source)?;
     let mut index = 0;
@@ -76,16 +30,31 @@ pub fn normalize_function_return_tokens(source: &str) -> Result<Vec<Token>, Erro
             continue;
         }
 
-        let start = &tokens[first];
-        let name = &tokens[name_index];
+        let (start_line, start_column) = {
+            let token = &tokens[first];
+            (token.line(), token.column())
+        };
+        let (name_line, name_column) = {
+            let token = &tokens[name_index];
+            (token.line(), token.column())
+        };
+
         tokens.insert(
             first,
-            Token::synthetic(TokenKind::OpenBracket, start.line(), start.column()),
+            Token::synthetic(
+                TokenKind::OpenBracket,
+                start_line,
+                start_column,
+            ),
         );
         let close_index = name_index + 1;
         tokens.insert(
             close_index,
-            Token::synthetic(TokenKind::CloseBracket, name.line(), name.column()),
+            Token::synthetic(
+                TokenKind::CloseBracket,
+                name_line,
+                name_column,
+            ),
         );
         index = close_index + 1;
     }
@@ -104,18 +73,4 @@ fn find_function_name(tokens: &[Token], start: usize) -> Option<usize> {
         index += 1;
     }
     None
-}
-
-fn line_starts(source: &str) -> Vec<usize> {
-    let mut starts = vec![0];
-    for (index, byte) in source.bytes().enumerate() {
-        if byte == b'\n' {
-            starts.push(index + 1);
-        }
-    }
-    starts
-}
-
-fn offset(line_starts: &[usize], token: &Token) -> usize {
-    line_starts[token.line() - 1] + token.column() - 1
 }
