@@ -176,6 +176,8 @@ pub enum TokenKind {
     Colon,
     // ::
     DoubleColon,
+    // ::<
+    Tetraops,
     // ;
     Semicolon,
     // ,
@@ -346,7 +348,11 @@ impl<'src> Lexer<'src> {
                 let kind = match self.peek() {
                     Some(b':') => {
                         self.advance();
-                        TokenKind::DoubleColon
+                        if self.matches(b'<') {
+                            TokenKind::Tetraops
+                        } else {
+                            TokenKind::DoubleColon
+                        }
                     }
                     Some(b'&') => {
                         self.advance();
