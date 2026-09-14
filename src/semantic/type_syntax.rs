@@ -239,7 +239,10 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_union(&mut self) -> Result<TypeSyntax, String> {
-        if !self.take(TokenKind::DoubleColon) && !self.take(TokenKind::Colon) {
+        if !self.take(TokenKind::DoubleColon)
+            && !self.take(TokenKind::Colon)
+            && !self.take(TokenKind::BitNot)
+        {
             return Err("expected `::` in union type".into());
         }
         self.expect_any(&[TokenKind::OpenAngle, TokenKind::Less], "expected `<` in union type")?;
