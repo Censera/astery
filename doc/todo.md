@@ -10,14 +10,14 @@ The syntax document is authoritative for language spelling and surface behavior.
 - [x] Establish the compiler library and executable entry point.
 - [x] Establish explicit compiler errors.
 - [x] Keep compiler stage boundaries explicit.
-- [ ] Keep the public compiler API limited to the operations users actually need.
-- [ ] Define the ownership boundary between source, tokens, AST, semantic IR, backend IR, and emitted artifacts.
-- [ ] Define the compiler input model for one source unit and multiple related source units.
-- [ ] Define the compilation unit and module graph used by semantic analysis.
-- [ ] Define deterministic ordering for source discovery, modules, declarations, diagnostics, and emitted symbols.
-- [ ] Define compiler options without introducing a configuration framework.
-- [ ] Define target and output settings needed by the native compiler.
-- [ ] Define failure behavior for missing files, malformed input, invalid compiler options, unsupported targets, and backend failures.
+- [x] Keep the public compiler API limited to the operations users actually need.
+- [x] Define the ownership boundary between source, tokens, AST, semantic IR, backend IR, and emitted artifacts.
+- [x] Define the compiler input model for one source unit and multiple related source units.
+- [x] Define the compilation unit and module graph used by semantic analysis.
+- [x] Define deterministic ordering for source discovery, modules, declarations, diagnostics, and emitted symbols.
+- [x] Define compiler options without introducing a configuration framework.
+- [x] Define target and output settings needed by the native compiler.
+- [x] Define failure behavior for missing files, malformed input, invalid compiler options, unsupported targets, and backend failures.
 
 ## Lexer
 
