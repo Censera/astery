@@ -108,7 +108,7 @@ pub enum TokenKind {
     And,
     // ||
     Or,
-    // ^^
+    // ~~
     Xor,
     // !
     Not,
@@ -337,13 +337,14 @@ impl<'src> Lexer<'src> {
                     Err(self.lex_error(line, column, "unexpected `|`"))
                 }
             }
-            b'^' => {
-                if self.matches(b'^') {
+            b'~' => {
+                if self.matches(b'~') {
                     Ok(self.simple(TokenKind::Xor, line, column))
                 } else {
-                    Ok(self.simple(TokenKind::Caret, line, column))
+                    Err(self.lex_error(line, column, "unexpected `~`"))
                 }
             }
+            b'^' => Ok(self.simple(TokenKind::Caret, line, column)),
             b':' => {
                 let kind = match self.peek() {
                     Some(b':') => {
