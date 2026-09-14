@@ -1,10 +1,12 @@
 use crate::compiler::{Program, Source};
 use crate::error::Error;
 use crate::lexer::Token;
-use crate::parser::{ImportItem, Visibility};
+use crate::parser::{FunctionDeclaration, ImportItem, Visibility};
 use crate::span::{SourceSpan, Spanned};
 
 mod type_syntax;
+
+use type_syntax::{TypeSyntax, parse as parse_type};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub(crate) enum SemanticVisibility {
@@ -44,6 +46,53 @@ impl SemanticFunctionAttributes {
             })
             .collect();
         Self { compiler }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) struct SemanticFunctionSignature {
+    pub(crate) parameters: Vec<TypeSyntax>,
+    pub(crate) return_type: TypeSyntax,
+}
+
+impl SemanticFunctionSignature {
+    pub(crate) fn from_function(function: &FunctionDeclaration) -> Result<Self, String> {
+        let parameters = function
+            .parameters
+            .iter()
+            .map(|parameter| parse_type(&parameter.type_tokens))
+            .collect::<Result<Vec<_>, _>>()?;
+        let return_type = parse_type(&function.return_type)?;
+        Ok(Self {
+            parameters,
+            return_type,
+        })
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) struct SemanticOverloadSet {
+    pub(crate) name: String,
+    pub(crate) signatures: Vec<SemanticFunctionSignature>,
+}
+
+impl SemanticOverloadSet {
+    pub(crate) fn from_functions(
+        functions: &[FunctionDeclaration],
+    ) -> Result<Vec<Self>, String> {
+        let mut overloads = Vec::new();
+        for function in functions {
+            let signature = SemanticFunctionSignature::from_function(function)?;
+            if let Some(set) = overloads.iter_mut().find(|set: &&mut Self| set.name == function.name) {
+                set.signatures.push(signature);
+            } else {
+                overloads.push(Self {
+                    name: function.name.clone(),
+                    signatures: vec![signature],
+                });
+            }
+        }
+        Ok(overloads)
     }
 }
 
@@ -192,8 +241,13 @@ impl SemanticProgram {
 
 #[cfg(test)]
 mod tests {
-    use super::{CompilerAttribute, SemanticFunctionAttributes, SemanticVisibility};
+    use super::{
+        CompilerAttribute, SemanticFunctionAttributes, SemanticFunctionSignature,
+        SemanticOverloadSet, SemanticVisibility,
+    };
+    use crate::lexer::tokenize;
     use crate::parser::Visibility;
+    use crate::parser::parse_functions;
 
     #[test]
     fn lowers_visibility() {
@@ -219,5 +273,29 @@ mod tests {
                 CompilerAttribute::Unknown("custom".into()),
             ]
         );
+    }
+
+    #[test]
+    fn builds_function_signature() {
+        let tokens = tokenize("fn i32 add(a i32, b i32) {}").unwrap();
+        let function = &parse_functions(&tokens).unwrap()[0];
+        let signature = SemanticFunctionSignature::from_function(function).unwrap();
+        assert_eq!(signature.parameters.len(), 2);
+        assert_eq!(signature.return_type, super::TypeSyntax::Integer { signed: true, bits: 32 });
+    }
+
+    #[test]
+    fn groups_functions_into_overload_sets() {
+        let tokens = tokenize(
+            "fn i32 add(a i32) {} fn f64 add(a f64) {} fn i32 sub(a i32) {}",
+        )
+        .unwrap();
+        let functions = parse_functions(&tokens).unwrap();
+        let overloads = SemanticOverloadSet::from_functions(&functions).unwrap();
+        assert_eq!(overloads.len(), 2);
+        assert_eq!(overloads[0].name, "add");
+        assert_eq!(overloads[0].signatures.len(), 2);
+        assert_eq!(overloads[1].name, "sub");
+        assert_eq!(overloads[1].signatures.len(), 1);
     }
 }
