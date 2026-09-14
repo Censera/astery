@@ -149,6 +149,60 @@ mod tests {
     }
 
     #[test]
+    fn tokenizes_valid_escapes_and_preserves_locations() {
+        let compiler = Compiler::new();
+        let source = Source::new("main.as", "\nlet text = \"a\\n\\t\\0\\\\\\\"\";");
+        let tokens = compiler.tokenize(&source).unwrap();
+        let string = tokens
+            .iter()
+            .find(|token| matches!(token.kind(), TokenKind::String(_)))
+            .unwrap();
+        assert_eq!(string.line(), 2);
+        assert_eq!(string.column(), 12);
+        assert_eq!(string.span().start.line, 2);
+        assert_eq!(string.span().start.column, 12);
+        assert_eq!(
+            string.kind(),
+            &TokenKind::String("a\n\t\0\\\"".into())
+        );
+    }
+
+    #[test]
+    fn rejects_invalid_numeric_literals_at_the_lexer_stage() {
+        let compiler = Compiler::new();
+        for source in ["12abc", "1.2.3"] {
+            let error = compiler.tokenize(&Source::new("main.as", source)).unwrap_err();
+            assert_eq!(error.stage(), Some(Stage::Lexer));
+            assert!(error.to_string().contains("invalid numeric literal"));
+        }
+    }
+
+    #[test]
+    fn tokenizes_ranges_after_integer_literals() {
+        let compiler = Compiler::new();
+        let tokens = compiler
+            .tokenize(&Source::new("main.as", "0..10 0..=9"))
+            .unwrap();
+        let kinds = tokens.iter().map(Token::kind).collect::<Vec<_>>();
+        assert_eq!(kinds[0], &TokenKind::Integer("0".into()));
+        assert_eq!(kinds[1], &TokenKind::Range);
+        assert_eq!(kinds[2], &TokenKind::Integer("10".into()));
+        assert_eq!(kinds[3], &TokenKind::Integer("0".into()));
+        assert_eq!(kinds[4], &TokenKind::RangeInclusive);
+        assert_eq!(kinds[5], &TokenKind::Integer("9".into()));
+    }
+
+    #[test]
+    fn reports_unknown_escapes_at_the_lexer_stage() {
+        let compiler = Compiler::new();
+        let error = compiler
+            .tokenize(&Source::new("main.as", "let value = \"bad\\q\";"))
+            .unwrap_err();
+        assert_eq!(error.stage(), Some(Stage::Lexer));
+        assert!(error.to_string().contains("unknown escape `\\q`"));
+    }
+
+    #[test]
     fn tokenizes_labels_and_function_flags() {
         let compiler = Compiler::new();
         let source = Source::new("main.as", "@striped loop 'outer {} break 'outer");
