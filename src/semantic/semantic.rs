@@ -3,11 +3,23 @@ use crate::compiler::{Program, Source};
 use crate::error::Error;
 use crate::span::{SourceSpan, Spanned};
 
-/// Semantic analysis input retains the parser program and expanded token stream.
-/// The parser program is the structural input. The token stream is retained for
-/// source spans and macro-expanded source ownership. Semantic lowering has not
-/// discarded parser information yet, so later semantic passes do not need to
-/// reconstruct locations from source text.
+/// Semantic analysis owns the source, the complete parser program, and the
+/// macro-expanded token stream that produced that program.
+///
+/// The parser program is the structural input to semantic analysis. The token
+/// stream remains owned by the semantic stage because parser nodes currently
+/// do not carry their own spans, and later diagnostics must not reconstruct
+/// locations by reparsing source text.
+///
+/// Source text remains owned as well so diagnostics can identify the source
+/// file and future reporting can inspect the original source when necessary.
+///
+/// When semantic lowering introduces its own representation, parser-only
+/// syntax details may be discarded once no diagnostic or backend requirement
+/// depends on them. Semantic names, resolved declarations, resolved types,
+/// required expression structure, and source locations must remain. The
+/// expanded token stream is retained until equivalent source-location data is
+/// represented directly by the semantic model.
 #[derive(Debug)]
 pub(crate) struct SemanticProgram {
     pub(crate) source: Source,

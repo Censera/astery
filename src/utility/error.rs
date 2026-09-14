@@ -4,9 +4,13 @@ use crate::span::SourceSpan;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Stage {
+    /// Source text could not be converted into tokens.
     Lexer,
+    /// Tokens do not form valid Astery syntax or structure.
     Parser,
+    /// Parsed constructs are structurally valid but violate Astery meaning or type rules.
     Semantic,
+    /// A valid semantic program could not be lowered to the target backend.
     Backend,
 }
 

@@ -62,8 +62,8 @@
 - [x] Define source spans for every semantic input that can produce a diagnostic.
 - [x] Preserve the original source location of declarations, identifiers, type references, literals, operators, expressions, statements, and macro-expanded input.
 - [x] Make semantic errors point at the smallest useful source span instead of a generic file position.
-- [ ] Define the distinction between parser errors, semantic errors, and backend errors.
-- [ ] Define which parser constructs are discarded after semantic lowering and which information must remain for diagnostics and code generation.
+- [x] Define the distinction between parser errors, semantic errors, and backend errors.
+- [x] Define which parser constructs are discarded after semantic lowering and which information must remain for diagnostics and code generation.
 
 ### Modules, imports, and namespaces
 
