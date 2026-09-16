@@ -19,6 +19,8 @@ use math { function, variable { that } }
 let name = value;
 let name T = value;
 let name, name, name = value;
+// Here { ... } belongs to the let declaration syntax
+// It means "declare several bindings"
 let {
     name = value,
     name = value,
