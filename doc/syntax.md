@@ -20,6 +20,11 @@ let name = value;
 let name T = value;
 let name, name, name = value;
 let {
+    name = value,
+    name = value,
+    name = value
+};
+let {
     name T = value,
     name T = value,
     name T = value
@@ -29,6 +34,11 @@ let _ = value;
 // Constants
 const name T = value;
 const name, name, name = value;
+const {
+    name = value,
+    name = value,
+    name = value
+};
 const {
     name T = value,
     name T = value,
