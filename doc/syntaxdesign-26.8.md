@@ -203,6 +203,177 @@ macro square(x) {
 let value = square!(4);
 ```
 
+## Blocks and expressions
+
+A block is a sequence of statements with an optional final expression. A block can be used as the body of a function or control-flow construct, and it can also appear where an expression is expected.
+
+The value of a block is determined by its final item:
+
+```rs
+{
+    let a i32 = 10;
+    let b i32 = 20;
+    a + b
+}
+```
+
+The block above is an expression whose type is the type of `a + b`.
+
+A final expression without a semicolon produces the block value. A final expression followed by a semicolon does not produce a value:
+
+```rs
+{
+    123
+}
+
+{
+    123;
+}
+```
+
+The first block has type `i32`. The second block has no value and therefore has the unit/void-like result type defined by the language.
+
+Statements inside the block are evaluated in order. Their values, when they have any, are not implicitly returned by the block. Only the final expression determines the block result.
+
+A block may therefore contain declarations and then return a value built from them:
+
+```rs
+{
+    let a i32 = 123;
+    let b i32 = 456;
+    a + b
+}
+```
+
+The final expression may also be another block, allowing nesting:
+
+```rs
+{
+    let value = {
+        let a i32 = 10;
+        a * 2
+    };
+    value + 1
+}
+```
+
+Blocks used as statements do not need to produce a value. Blocks used as expressions must obey the normal expression typing rules. A context that requires a value must reject a block whose final expression does not produce one.
+
+### Block grammar
+
+Conceptually, a block follows this form:
+
+```text
+block = "{" block-item* "}"
+block-item = statement | expression [";"]
+```
+
+The parser must preserve whether the final expression ended in a semicolon because that distinction changes whether the block has a resulting value.
+
+A block is not a special declaration form. The same block expression rules apply regardless of where the block is used.
+
+### Scope
+
+A block introduces a lexical scope. Bindings declared inside the block are visible from their declaration onward and are not visible after the block ends.
+
+```rs
+let value = {
+    let a i32 = 123;
+    a + 1
+};
+
+// `a` is not visible here.
+```
+
+Bindings declared earlier in the same block may be referenced by later statements or expressions:
+
+```rs
+{
+    let a i32 = 123;
+    let b i32 = a + 1;
+    b
+}
+```
+
+### Assignment expressions
+
+Assignment is an expression and therefore may appear anywhere an expression is accepted.
+
+```rs
+a = b
+```
+
+An assignment evaluates the right-hand side and stores the resulting value into the assignable left-hand side. The assignment expression itself produces the assigned value, subject to the language's assignment typing rules.
+
+Assignments may therefore be used as block results:
+
+```rs
+{
+    a = b
+}
+```
+
+and may be used as arguments to a function call:
+
+```rs
+print { a = b } { a = t };
+```
+
+The braces in this example are block expressions. Each block evaluates its assignment and passes the resulting block value to `print`.
+
+The left-hand side of an assignment must be assignable. At minimum this includes mutable local bindings. Constants and other non-assignable expressions cannot appear on the left-hand side.
+
+Assignment does not declare a new binding. Declaration and assignment remain separate operations:
+
+```rs
+let value i32 = 10;
+value = 20;
+```
+
+### Multi-binding declarations inside blocks
+
+A block may contain ordinary `let` declarations and multi-binding declarations. For example:
+
+```rs
+let = {
+    a i32 = 123,
+    b i32 = 456,
+    t i32 = a
+};
+```
+
+The bindings are processed in declaration order, so `t` may use `a` because `a` was declared earlier in the same block. A binding may not refer to a later binding unless a separate language feature explicitly introduces forward references.
+
+The `let = { ... }` form uses a block expression as its initializer. The block follows the same result rules described above: its final non-terminated expression supplies the value and type of the block.
+
+For a block consisting only of declarations, the block does not implicitly return the last declaration. A value is returned only by an actual final expression without a semicolon.
+
+### Assignment and block result examples
+
+```rs
+fn main() {
+    let a i32 = 123;
+    let b i32 = 456;
+    let t i32 = a;
+
+    print { a = b } { a = t };
+
+    return 0
+}
+```
+
+The two blocks passed to `print` each contain one assignment expression. Because neither assignment is terminated with a semicolon inside its block, the assignment result becomes the block result.
+
+Adding a semicolon changes the result:
+
+```rs
+print {
+    a = b;
+};
+```
+
+Here the assignment is a statement rather than the value-producing final expression of the block.
+
 ## Experimental
 
 ```rs
@@ -223,7 +394,7 @@ let value = square!(4);
 | `char`                    | Character                  |
 | `string`                  | Heap-allocated string      |
 | `^T`                      | Non-null pointer to `T`    |
-| `?^T`                     | Optional pointer to `T`    |
+| `?^T`                     | Optional pointer to `T`   |
 
 ### Arrays
 
