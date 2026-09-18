@@ -169,7 +169,7 @@ into Node {
 let node Node = Node.new();
 
 embed C {
-    printf("Hello\n");
+    int x = 1;
 }
 
 // cast
@@ -503,8 +503,8 @@ let (a, b) = (b, a);
 type Name = Union::<T, T>;
 
 // Aliases
-type Result::<T, T> = Union:<T, T>;
-type Optional::<T> = Union:<T, None>;
+type Result::<T, T> = Union::<T, T>;
+type Optional::<T> = Union::<T, None>;
 
 // Construction
 // Inferred from value's type
