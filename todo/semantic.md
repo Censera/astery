@@ -5,7 +5,6 @@
 - [ ] Define collection lengths and compile-time dimensions.
 - [ ] Define which parser constructs are erased after semantic lowering and which survive to backend lowering.
 - [ ] Ensure backend lowering never reparses source text.
-- [ ] Preserve source ownership for every source unit in a module graph.
 - [ ] Associate every semantic declaration and reference with its source span.
 
 ## Modules and imports
@@ -20,12 +19,13 @@
 ## Symbols and names
 
 - [ ] Build symbol tables for module, function, implementation, and local scopes.
-- [ ] Define lexical scopes and legal shadowing.
+- [ ] Implement lexical block scopes where bindings are visible from their declaration to the end of the block and shadowing is allowed, matching the parser's scope stack.
 - [ ] Resolve every identifier to exactly one declaration or report a precise error.
 - [ ] Detect duplicate declarations.
 - [ ] Resolve parameters, bindings, constants, functions, types, variants, fields, and methods through the correct namespace.
 - [ ] Track the declaration behind every semantic reference.
 - [ ] Keep lookup order deterministic.
+- [ ] Report a name declared with more than one kind (type, function, value) and list the conflicting declarations.
 
 ## Types
 
@@ -34,6 +34,9 @@
 - [ ] Detect unknown, duplicate, conflicting, malformed, and unsupported recursive types.
 - [ ] Define type identity, equality, assignability, compatibility, and implicit-conversion rules.
 - [ ] Define `None`, optional pointers, layout-relevant properties, and compile-time dimensions.
+- [ ] Fix `T<length>` vector types: `type_syntax.rs` matches `OpenAngle` and `CloseAngle`, which the lexer never emits.
+- [ ] Decide whether `i128` and `u128` are language types; `type_syntax.rs` accepts them and the type table in `doc/syntax.md` lists only `i8` to `i64` and `u8` to `u64`.
+- [ ] Define the unit type used by functions without a return type and by blocks that end in `;`.
 
 ## Literals
 
@@ -55,9 +58,9 @@
 - [ ] Resolve function declarations from call sites.
 - [ ] Validate argument count and types.
 - [ ] Resolve overloads by the documented signature rules.
-- [ ] Define how return type participates in overload identity and selection.
+- [ ] Define how the expected type selects among overloads that differ only by return type.
 - [ ] Detect ambiguous and unmatched calls.
-- [ ] Validate variadic and flagged calls, including `@striped` and `@lossely`.
+- [ ] Validate variadic and flagged calls, including `@Stripped` and `@Loosely`.
 - [ ] Resolve methods after receiver type resolution.
 - [ ] Detect duplicate/conflicting signatures and indistinguishable overloads.
 - [ ] Preserve the selected declaration/signature for backend lowering.
@@ -70,6 +73,15 @@
 - [ ] Enforce mutability and assignment rules.
 - [ ] Define `_` discard behavior and initialization-before-use rules.
 - [ ] Reject invalid self-referential initialization.
+- [ ] Treat `let (a, b) = (b, a);` as new bindings that shadow the old ones.
+- [ ] Type assignment as an expression that produces the assigned value, with a mutable local binding as the minimum assignable left-hand side.
+- [ ] Process `let { ... }` and `const { ... }` lists in declaration order and reject a reference to a later binding in the same list.
+
+## Blocks
+
+- [ ] Type a block by its final expression when it has no `;`, and give it the unit type when it ends in `;` or holds no expression.
+- [ ] Reject a block without a value in a context that requires one.
+- [ ] Type the shortened forms `statement if condition;` and `value if condition else value`.
 
 ## Collections and ranges
 
@@ -79,16 +91,17 @@
 - [ ] Type-check indexing, index types, targets, ranges, inclusive ranges, and string slicing.
 - [ ] Define result types and runtime out-of-bounds behavior.
 - [ ] Reject statically provable invalid indices where required.
+- [ ] Validate the repeat forms `T[length, value]` and `T<length, value>` and the inferred-length forms `T[]` and `T<>`.
 
 ## Structs, enums, unions, members
 
 - [ ] Resolve and validate positional/named struct construction.
 - [ ] Detect missing, unknown, and duplicate field initialization.
-- [ ] Resolve member access and field visibility.
+- [ ] Resolve member access and enforce field and variant visibility.
 - [ ] Resolve enum variants and payloads.
 - [ ] Resolve union values and member/variant access.
 - [ ] Define unit, tuple, and field variants.
-- [ ] Validate union match arms and exhaustiveness.
+- [ ] Infer the union member from the value's type at construction, match by member type (`i64(value) {}`) instead of constructor name, and validate arms and exhaustiveness.
 
 ## `into` and methods
 
@@ -121,9 +134,8 @@
 
 - [ ] Resolve supported `@flag` names and placement.
 - [ ] Validate flag arguments and incompatible combinations.
-- [ ] Enforce semantic effects of `@striped` and `@lossely`.
-- [ ] Ensure macro expansion behaves like ordinary source with useful diagnostics.
-- [ ] Define semantic restrictions around embedded C.
+- [ ] Enforce semantic effects of `@Stripped` and `@Loosely`.
+- [ ] Rename the `Striped` and `Lossely` attributes and the `striped` and `lossely` flag strings to `Stripped` and `Loosely`, as `doc/syntax.md` spells them.
 
 ## Diagnostics and invariants
 
@@ -141,4 +153,5 @@
 - [ ] Test primitive/user types, aliases, composites, unions, and pointers.
 - [ ] Test literal typing and operator rules.
 - [ ] Test calls, overloads, flags, methods, returns, assignment, and control flow.
+- [ ] Test block values, assignment expressions, and multi-binding declaration order.
 - [ ] Test macros, embedded C, deterministic diagnostics, and source locations.

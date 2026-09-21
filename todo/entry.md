@@ -11,7 +11,7 @@
 - [ ] Define help and version output.
 - [ ] Define exit codes for usage, source, semantic, backend, and toolchain failures.
 - [ ] Keep CLI parsing independent from compiler internals.
-- [ ] Match documented success and error output.
+- [ ] Print `Finished [bin] in X ms` after a successful build and `Checked, and everything is OK.` after a successful check-only run.
 
 ## End-to-end entry behavior
 
@@ -26,6 +26,5 @@
 
 - [ ] Compile the compiler from a clean checkout.
 - [ ] Verify installation and CLI behavior from a clean environment.
-- [ ] Update version and release metadata.
-- [ ] Keep README examples buildable.
-- [ ] Remove obsolete `v0.x` and `asteri` terminology from user-facing entry points.
+- [ ] Write the README, which holds one line, and keep its examples buildable.
+- [ ] Fix the `license` field in `Cargo.toml`: `Apache-License-2.0` is not an SPDX identifier and the LICENSE file is Apache 2.0.

@@ -38,6 +38,8 @@
 - [ ] Lower arithmetic, logic, comparisons, bitwise operations, shifts, increments, and compound assignments.
 - [ ] Lower ranges, casts, address-of, pointer operations, indexing, slicing, and conditional expressions.
 - [ ] Lower local bindings, constants, loads, stores, allocation, deallocation, and composite temporary lifetimes.
+- [ ] Lower assignment expressions, which produce the assigned value.
+- [ ] Lower block expressions, including final-expression values and the unit result.
 
 ## Composite values
 
@@ -66,7 +68,6 @@
 
 - [ ] Define the minimum optimization level.
 - [ ] Keep optimization separate from language semantics.
-- [ ] Verify LLVM IR structurally.
 - [ ] Add optimization only after measuring a real code-generation problem.
 
 ## Runtime and standard library

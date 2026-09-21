@@ -9,6 +9,7 @@
 - [ ] Keep deterministic ordering for source discovery, modules, declarations, diagnostics, and emitted symbols.
 - [ ] Keep options explicit without introducing a configuration framework.
 - [ ] Keep missing-file, malformed-input, invalid-option, unsupported-target, and backend failures explicit.
+- [ ] Update the pipeline in `doc/design.md` and `doc/goal.md` to include the return-type normalizer, macro expansion, and declaration index that `doc/syntax.md` lists.
 
 ## Diagnostics
 
@@ -20,6 +21,7 @@
 - [ ] Include both operand types in type/operator errors.
 - [ ] Include expected and actual types in assignment/call/return errors.
 - [ ] Include useful imported-module and macro-origin context.
+- [ ] Render semantic spans in the documented `E [src/file.as][Line][Column]` form or update the documented form; `error.rs` prints `[line:col-line:col]` for semantic errors.
 - [ ] Keep diagnostic wording stable enough for tests.
 - [ ] Ensure source locations survive every compiler stage.
 - [ ] Add warning infrastructure only when a real warning class exists.
@@ -27,9 +29,13 @@
 ## Repository hygiene
 
 - [ ] Keep source layout small and understandable.
+- [ ] Replace the `#[path]` module attributes in `lib.rs`, `compiler.rs`, and `shortcuts.rs` with a module layout the compiler resolves by default.
+- [ ] Compile `type_syntax.rs` once; `semantic.rs` and `compiler.rs` both declare it as a module.
+- [ ] Remove the `extra/macros.rs` include and the macro re-exports from `backend/shortcuts.rs`.
+- [ ] Fix the links to `syntaxdesign-26.8.md` in `doc/goal.md`; the syntax document is `doc/syntax.md`.
 - [ ] Remove obsolete modules, dead code, and compatibility layers after migrations.
 - [ ] Keep dependencies justified and minimal.
-- [ ] Prefer the Rust/JDK standard library where practical.
+- [ ] Prefer the Rust standard library where practical.
 - [ ] Keep public APIs minimal and explicit.
 - [ ] Keep backend wrappers limited to real Astery concepts.
 - [ ] Keep terminal output free of decorative formatting that harms scripting.
@@ -75,6 +81,7 @@
 - [ ] Keep experimental module behavior isolated from the main module system.
 - [ ] Keep advanced macro features isolated until basic expansion is stable and tested.
 - [ ] Do not expose experimental syntax as stable behavior without updating syntax documentation and tests.
+- [ ] Resolve the conflict between `doc/syntax.md`, which lists modules and macros as main features and runs macro expansion in the pipeline, and `doc/design.md` and `doc/plan.md`, which treat them as experimental.
 
 ## Release
 

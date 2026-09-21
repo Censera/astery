@@ -199,6 +199,8 @@ let value = Name.name();
 type Point struct { x f64, y f64 }
 let point Point = Point { 3.0, 4.0 };
 let point Point = Point { x = 3.0, y = 4.0 };
+let point = Point { 1.0, 2.0 };
+let point = Point { x = 1.0, y = 3.0 };
 
 type Node struct {}
 into Node {
@@ -229,6 +231,10 @@ let name ^T = &value;
 // None pointer
 let name ?^T = &value;
 let name ?^T = None;
+
+// Dereference
+let ^a = 10;
+let b = a^;
 
 // Function flags for function's settings
 @Name
@@ -594,6 +600,8 @@ Scope is lexical and shadowing is allowed. The parser's scope stack in "Parsing 
 
 ### Arrays
 
+Arrays have a fixed length
+
 ```rs
 let name T[length];
 let name T[] = [value, value, value];
@@ -606,6 +614,8 @@ let value = name[name[index]];
 
 ### Vectors
 
+Vectors are growable
+
 ```rs
 let name T<length>;
 let name T<> = <value, value, value>;
@@ -615,6 +625,10 @@ let name T<length, value>;
 let value = name<index>;
 let value = name<name>;
 let value = name<name<index>>;
+
+name.push(value);
+name.pop();
+name.length();
 ```
 
 ### Tuples
@@ -699,17 +713,17 @@ Shifts no longer use `<<` and `>>`. With `>>` gone, nested angle brackets close 
 
 ```rs
 // Declaration
-type Name = Union::<T, T>;
+type Name = Union<T, T>;
 
 // Aliases
-type Result::<T, T> = Union::<T, T>;
-type Optional::<T> = Union::<T, None>;
+type Result<T, T> = Union<T, T>;
+type Optional<T> = Union<T, None>;
 
 // Construction
 // Inferred from value's type
 // No explicit tag
-let r Result::<i64, string> = 5;
-let r Result::<i64, string> = "division by zero";
+let r Result<i64, string> = 5;
+let r Result<i64, string> = "division by zero";
 
 // Matching by type
 // Not by handpicked constructor name
@@ -722,7 +736,7 @@ match r {
     }
 }
 
-fn Result::<i64, string> divide(a i64, b i64) {
+fn Result<i64, string> divide(a i64, b i64) {
     return "division by zero" if b == 0;
     return a / b
 }
