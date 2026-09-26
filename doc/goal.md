@@ -1,12 +1,12 @@
 # Goal
 
-Astery is a statically typed programming language for game development.
+Astry is a statically typed programming language for game development.
 
 The v26 goal is a small compiled language with direct control over its execution model, a clear syntax, and an implementation that remains understandable from the language surface down to generated code.
 
 ## Language
 
-Astery should provide:
+Astry should provide:
 
 - Static types.
 - Functions and function overloading.
@@ -23,7 +23,7 @@ The syntax design is defined by [`syntaxdesign-26.8.md`](syntaxdesign-26.8.md).
 
 ## Compiler
 
-The compiler should turn valid Astery source into native code through LLVM.
+The compiler should turn valid Astry source into native code through LLVM.
 
 The implementation should grow in the same order as the language requires it:
 
@@ -41,7 +41,7 @@ Each stage owns one responsibility. Later stages must not compensate for missing
 
 ## Backend
 
-Astery should consume [`an-inkwell`](https://github.com/Censera/an-inkwell) for LLVM interaction instead of exposing LLVM's full API directly to the compiler.
+Astry should consume [`an-inkwell`](https://github.com/Censera/an-inkwell) for LLVM interaction instead of exposing LLVM's full API directly to the compiler.
 
 The backend should use only the operations the language actually needs.
 

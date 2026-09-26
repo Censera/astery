@@ -1,18 +1,18 @@
 [lints.clippy]
 
 [package]
-name = "astery"
+name = "astry"
 version = "26.8.0"
 edition = "2024"
-description = "astery the programming language"
-repository = "https://github.com/Censera/astery"
+description = "astry the programming language"
+repository = "https://github.com/Censera/astry"
 readme = "README.md"
 license = "Apache-License-2.0"
 keywords = ["compiler", "language", "llvm"]
 categories = ["command-line-utilities", "development-tools::compilers"]
 
 [[bin]]
-name = "astery"
+name = "astry"
 path = "src/entry/main.rs"
 
 [dependencies]

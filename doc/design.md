@@ -1,6 +1,6 @@
 # Design
 
-Astery is designed as a small compiled language with concrete concepts and explicit ownership.
+Astry is designed as a small compiled language with concrete concepts and explicit ownership.
 
 ## Language shape
 
@@ -98,7 +98,7 @@ Semantic analysis resolves names, types, visibility, overloads, casts, and other
 
 The backend lowers semantic program structures into LLVM IR through `an-inkwell`.
 
-Astery should not reproduce LLVM's object hierarchy. Backend types should correspond to real compiler concepts and remain as small as possible.
+Astry should not reproduce LLVM's object hierarchy. Backend types should correspond to real compiler concepts and remain as small as possible.
 
 The backend boundary should keep LLVM handles private. Raw LLVM operations belong in `an-inkwell`.
 
@@ -106,7 +106,7 @@ The backend boundary should keep LLVM handles private. Raw LLVM operations belon
 
 The v26 language types map to LLVM only where code generation needs a representation.
 
-Primitive types map directly where LLVM has a corresponding representation. Composite language types are represented according to the operations Astery needs for construction, access, calls, and returns.
+Primitive types map directly where LLVM has a corresponding representation. Composite language types are represented according to the operations Astry needs for construction, access, calls, and returns.
 
 Pointers remain explicit. Optional pointers represent the language's `None` state rather than introducing hidden nullable behavior.
 

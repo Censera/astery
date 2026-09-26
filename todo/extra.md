@@ -29,9 +29,9 @@
 ## Embedded C
 
 - [ ] Validate embedded C placement and surrounding declarations.
-- [ ] Define the semantic boundary between Astery values and C.
+- [ ] Define the semantic boundary between Astry values and C.
 - [ ] Preserve embedded-C source locations.
-- [ ] Define which Astery and C declarations are visible across the boundary.
+- [ ] Define which Astry and C declarations are visible across the boundary.
 - [ ] Define multiple-block compilation and linking behavior.
 - [ ] Reject embedded C that requires unavailable target features.
 

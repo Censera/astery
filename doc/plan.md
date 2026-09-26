@@ -1,6 +1,6 @@
 # Plan
 
-Astery grows from the language frontend toward native code generation.
+Astry grows from the language frontend toward native code generation.
 
 ## 1. Foundation
 
@@ -67,7 +67,7 @@ Errors should identify the source construct that violated the rule.
 
 Use `an-inkwell` as the LLVM boundary.
 
-The Astery backend should consume only the concrete LLVM operations it needs. It should not depend on Inkwell directly after the required `an-inkwell` surface exists and is exercised.
+The Astry backend should consume only the concrete LLVM operations it needs. It should not depend on Inkwell directly after the required `an-inkwell` surface exists and is exercised.
 
 ## 6. Code generation
 

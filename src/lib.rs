@@ -81,14 +81,14 @@ mod tests {
     #[test]
     fn compiler_reports_semantic_analysis_as_next_stage() {
         let compiler = Compiler::new();
-        let error = compiler.compile(Source::new("test.astery", "fn main() {}"));
+        let error = compiler.compile(Source::new("test.astry", "fn main() {}"));
         assert_eq!(error.unwrap_err().stage(), Some(Stage::Semantic));
     }
 
     #[test]
     fn source_owns_name_and_text() {
-        let source = Source::new("test.astery", "fn main() {}");
-        assert_eq!(source.name(), "test.astery");
+        let source = Source::new("test.astry", "fn main() {}");
+        assert_eq!(source.name(), "test.astry");
         assert_eq!(source.text(), "fn main() {}");
     }
 

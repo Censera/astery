@@ -1,6 +1,6 @@
-# Astery v26 Syntax
+# Astry v26 Syntax
 
-This file is the source of truth for Astery's spelling and grammar in v26. `goal.md` states what the language is for, `design.md` describes the compiler's shape, and `plan.md` gives the order of work.
+This file is the source of truth for Astry's spelling and grammar in v26. `goal.md` states what the language is for, `design.md` describes the compiler's shape, and `plan.md` gives the order of work.
 
 Every section has the rule, examples, and where it matters, a note for semantic analysis (SeMa) and for the backend. Behavior the earlier draft left undefined is marked `(Qn)` and collected in "Open questions" at the end. Nothing marked `(Qn)` is decided.
 
@@ -927,7 +927,7 @@ Token substitution has a hazard. `square!(1 + 2)` becomes `1 + 2 * 1 + 2`, which
 
 ## 18. Embedded C
 
-`embed C { ... }` carries C source across the Astery and C boundary.
+`embed C { ... }` carries C source across the Astry and C boundary.
 
 ```rs
 embed C {
@@ -935,7 +935,7 @@ embed C {
 }
 ```
 
-The body is C. It is read from raw source text with its own brace matching (`parse_embedded_blocks`) and never interpreted as Astery.
+The body is C. It is read from raw source text with its own brace matching (`parse_embedded_blocks`) and never interpreted as Astry.
 
 ## 19. Parsing with name kinds
 

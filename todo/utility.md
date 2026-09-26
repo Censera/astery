@@ -37,7 +37,7 @@
 - [ ] Keep dependencies justified and minimal.
 - [ ] Prefer the Rust standard library where practical.
 - [ ] Keep public APIs minimal and explicit.
-- [ ] Keep backend wrappers limited to real Astery concepts.
+- [ ] Keep backend wrappers limited to real Astry concepts.
 - [ ] Keep terminal output free of decorative formatting that harms scripting.
 - [ ] Keep repository commands documented and reproducible.
 - [ ] Keep generated artifacts out of source directories unless intentionally required.

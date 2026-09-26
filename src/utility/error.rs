@@ -6,9 +6,9 @@ use crate::span::SourceSpan;
 pub enum Stage {
     /// Source text could not be converted into tokens.
     Lexer,
-    /// Tokens do not form valid Astery syntax or structure.
+    /// Tokens do not form valid Astry syntax or structure.
     Parser,
-    /// Parsed constructs are structurally valid but violate Astery meaning or type rules.
+    /// Parsed constructs are structurally valid but violate Astry meaning or type rules.
     Semantic,
     /// A valid semantic program could not be lowered to the target backend.
     Backend,

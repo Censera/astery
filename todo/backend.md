@@ -2,10 +2,10 @@
 
 ## Backend boundary
 
-- [ ] Define the Astery to `an-inkwell` boundary.
+- [ ] Define the Astry to `an-inkwell` boundary.
 - [ ] Confirm every required LLVM operation exists in the `an-inkwell` API before depending on it.
 - [ ] Keep LLVM handles private to backend implementation types.
-- [ ] Keep Astery semantic types independent from raw LLVM types.
+- [ ] Keep Astry semantic types independent from raw LLVM types.
 - [ ] Define backend error conversion and preserve source context where possible.
 - [ ] Define target-dependent backend capabilities without leaking target details into semantic analysis.
 
@@ -62,7 +62,7 @@
 
 - [ ] Lower embedded C into the native pipeline.
 - [ ] Define temporary/source file handling, include paths, compile flags, and link arguments.
-- [ ] Preserve useful mapping between native diagnostics and Astery sources.
+- [ ] Preserve useful mapping between native diagnostics and Astry sources.
 
 ## Optimization and verification
 

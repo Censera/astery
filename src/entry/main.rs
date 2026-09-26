@@ -1,12 +1,12 @@
 use std::{env, fs, process};
 
-use astery::{Compiler, Error, Source};
+use astry::{Compiler, Error, Source};
 
 fn run() -> Result<(), Error> {
     let path = env::args().nth(1).ok_or_else(|| {
         Error::Io(std::io::Error::new(
             std::io::ErrorKind::InvalidInput,
-            "usage: astery <source-file>",
+            "usage: astry <source-file>",
         ))
     })?;
 
